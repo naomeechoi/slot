@@ -50,13 +50,17 @@ const config = {
                 // loader: 'file-loader',
                 type: 'asset',
             },
+            {
+                test: /\.json$/i,
+                type: 'json'
+            },
             // Add your rules for custom modules here
             // Learn more about loaders from https://webpack.js.org/loaders/
         ],
     },
     resolve: {
         extensions: ['.tsx', '.ts', '.jsx', '.js', '...'],
-    }
+    },
 };
 
 module.exports = () => {

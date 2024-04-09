@@ -1,26 +1,22 @@
-import { Application, Assets, Sprite } from 'pixi.js';
+import { Application, Assets, Sprite } from "pixi.js";
+import CSlot from "./slot";
 
-(async () =>
-{
-    // Create a new application
-    const app = new Application();
+const SLOT = new CSlot();
+const FPS : number = 1000 / 60; 
 
-    // Initialize the application
-    await app.init({ width:960, height: 720});
+main();
 
-    // Append the application canvas to the document body
-    document.body.appendChild(app.canvas);
+function main() {
+    
+    SLOT.loadGameElements();
+    document.addEventListener("click", detectEvent);
+    setInterval(update, FPS);
+}
 
-    // Load the bunny texture
-    const texture = await Assets.loader.load('assets/background.png');
+function update() {
 
-    // Create a bunny Sprite
-    const background = new Sprite(texture);
+}
 
-    // Move the sprite to the center of the screen
-    background.x = 0;
-    background.y = 0;
-
-    app.stage.addChild(background);
-
-})();
+function detectEvent(event: MouseEvent) {
+    SLOT.receiveEventFromClient(event);
+}
