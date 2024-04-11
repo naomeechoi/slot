@@ -9,7 +9,7 @@ main();
 function main() {
     
     SLOT.loadGameElements();
-    document.addEventListener("click", detectEvent);
+    document.addEventListener("click", detectMouseEvent);
     setInterval(update, FPS);
 }
 
@@ -17,6 +17,6 @@ function update() {
 
 }
 
-function detectEvent(event: MouseEvent) {
-    SLOT.receiveEventFromClient(event);
+function detectMouseEvent(event: MouseEvent) {
+    SLOT.mouseEventFromClient(event);
 }

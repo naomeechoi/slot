@@ -2,11 +2,11 @@ import json from "./assets/data.json";
 
 export default class CSlot {
 
-    public loadGameElements() : boolean {
-
-        this.loadDataPromise()
-            .then(result => {
-                return this.createGameElementPromise(result)
+    public async loadGameElements() : Promise<boolean> {
+        const DATA_STR = JSON.stringify(json);
+        if(DATA_STR)
+        {
+            this.createGameElementPromise(DATA_STR)
                     .then(result => {
                         console.log('created game elements successfully');
                         return result;
@@ -15,24 +15,8 @@ export default class CSlot {
                         console.log('fail to create game elements');
                         return error;
                     })
-            })
-            .catch(error => {
-                console.log('load data failed: ', error);
-                return false;
-            })
-
+        } 
         return false;
-    }
-
-    private async loadDataPromise() : Promise<string> {
-        return new Promise((resolve, reject) => {
-            const JSONSTRING = JSON.stringify(json);
-            if(JSONSTRING === null || JSONSTRING === undefined) {
-                reject("failed to create json obj");
-            } else {
-                resolve(JSONSTRING);
-            }
-        })
     }
 
     private async createGameElementPromise(data: string) : Promise<boolean> {
@@ -47,17 +31,18 @@ export default class CSlot {
     }
 
     private createGameElement(data: string) : boolean {
-        const JSONOBJECT = JSON.parse(data);
-        if(JSONOBJECT === null || JSONOBJECT === undefined) {
+        const JSON_OBJECT = JSON.parse(data);
+        if(JSON_OBJECT === null || JSON_OBJECT === undefined) {
             return false;
         }
 
-        console.log(JSONOBJECT["Strip"]);
+        // 게임 요소들 만드는 로직
+        console.log(JSON_OBJECT["Strip"]);
 
         return true;
     }
 
-    public receiveEventFromClient(event: MouseEvent) : void {
+    public mouseEventFromClient(event: MouseEvent) : void {
         console.log("dddddddddddddd");
     }
 
