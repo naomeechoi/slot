@@ -2,35 +2,19 @@ import json from "./assets/data.json";
 
 export default class CSlot {
 
-    public async loadGameElements() : Promise<boolean> {
+    public loadGameElements() : boolean {
         const DATA_STR = JSON.stringify(json);
         if(DATA_STR)
         {
-            this.createGameElementPromise(DATA_STR)
-                    .then(result => {
-                        console.log('created game elements successfully');
-                        return result;
-                    })
-                    .catch(error => {
-                        console.log('fail to create game elements');
-                        return error;
-                    })
+            if(this.createGameElements(DATA_STR))
+                {
+                    return true;
+                }
         } 
         return false;
     }
 
-    private async createGameElementPromise(data: string) : Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            if(this.createGameElement(data)){
-                resolve(true);
-            }
-            else{
-                reject(false);
-            }
-        })
-    }
-
-    private createGameElement(data: string) : boolean {
+    private createGameElements(data: string) : boolean {
         const JSON_OBJECT = JSON.parse(data);
         if(JSON_OBJECT === null || JSON_OBJECT === undefined) {
             return false;
