@@ -2,6 +2,7 @@ import { Application, Assets, Sprite } from "pixi.js";
 import { APP, SYMBOL_MANAGER, REWARD_MANAGER } from "./singleton"
 import CReel from "./reel"
 const REEL_COUNT = 5;
+const TERM = 300;
 
 export default class CSlot {
     private observerReels: Array<CReel>;
@@ -49,7 +50,11 @@ export default class CSlot {
     }
 
     public mouseEventFromClient(event_: MouseEvent) : void {
-        console.log("dddddddddddddd");
+        for(let i = 0; i < REEL_COUNT; i++){
+            setTimeout(() => {
+                this.observerReels[i].setSpinningStatus(true);
+            }, i * TERM);
+        }
     }
 
     public receiveMessageFromServer() : boolean {

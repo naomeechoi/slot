@@ -9,6 +9,7 @@ export default class CReel {
     reelIdx: number;
     symbolSpriteArray: Array<Sprite>;
     lastSymbol: number;
+    isSpinning: boolean;
     
     constructor(reelIdx_: number) {
         this.reelIdx = reelIdx_;
@@ -26,6 +27,7 @@ export default class CReel {
         }
 
         this.lastSymbol = SYMBOL_COUNT - 1;
+        this.isSpinning = false;
     }
 
     public setReelImg() {
@@ -36,7 +38,14 @@ export default class CReel {
         }
     }
 
+    public setSpinningStatus(isSpinning_: boolean){
+        this.isSpinning = isSpinning_;
+    }
+
     public update(){
+        if(this.isSpinning == false)
+            return;
+
         for(let i = 0; i < this.symbolSpriteArray.length; i++){
             const symbolSprite = this.symbolSpriteArray[i];
             symbolSprite.y += SPEED;
