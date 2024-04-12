@@ -8,13 +8,12 @@ main();
 function main() {
     SLOT.setBackground();
     SLOT.setReel();
-    SLOT.setReelImg();
     document.addEventListener("click", detectMouseEvent);
     setInterval(update, FPS);
 }
 
 function update() {
-
+    SLOT.update();
 }
 
 function detectMouseEvent(event: MouseEvent) {

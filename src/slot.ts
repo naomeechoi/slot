@@ -37,13 +37,14 @@ export default class CSlot {
     public setReel(){
         for(let i = 0; i < REEL_COUNT; i++){
             const tempReel = new CReel(i);
+            tempReel.setReelImg();
             this.observerReels.push(tempReel);
         }
     }
 
-    public setReelImg(){
-        for(let i = 0; i < REEL_COUNT; i++){
-            this.observerReels[i].setReelImg();
+    public update(){
+        for(const reel of this.observerReels){
+            reel.update();
         }
     }
 
