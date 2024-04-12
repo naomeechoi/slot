@@ -6,8 +6,9 @@ const FPS : number = 1000 / 60;
 main();
 
 function main() {
-    SLOT.SetDefaultUI();
-    SLOT.loadGameElements();
+    SLOT.setBackground();
+    SLOT.setReel();
+    SLOT.setReelImg();
     document.addEventListener("click", detectMouseEvent);
     setInterval(update, FPS);
 }

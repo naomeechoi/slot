@@ -1,10 +1,17 @@
+import { Application, Assets, Sprite, Texture } from "pixi.js";
+
 class CSymbol {
     private readonly index: number;
     private readonly imgPath: string;
+    private texture!: any;
 
-    constructor(_index : number, _imgPath : string) {
-        this.index = _index;
-        this.imgPath = _imgPath
+    constructor(index_ : number, imgPath_ : string) {
+        this.index = index_;
+        this.imgPath = imgPath_;
+    }
+
+    public async loadTexture() {
+        this.texture = await Assets.loader.load(this.imgPath);
     }
 
     public getIndex() : number {
@@ -14,68 +21,66 @@ class CSymbol {
     public getImgPath() : string {
         return this.imgPath;
     }
+
+    public getTexture() : any {
+        return this.texture;
+    }
 }
 
 export default class CSymbolManager {
-    symbols: Map<number, CSymbol>;
-    symbolSequence: Map<number, number[]>;
+    symbols: Array<CSymbol>;
+    symbolSequence: Array<number[]>;
+    defaultSymbolsPos: Array<{x: number, y: number}[]>;
 
-    constructor(_symbolInfo: Array<{index: number, path: string}>, _sequenceInfo: Array<{stop: number[]}>) {
-        this.symbols = new Map<number, CSymbol>;
-        for(const symbol of _symbolInfo){
+    constructor(symbolInfo_: Array<{index: number, path: string}>, sequenceInfo_: Array<{stop: number[]}>, defaultSymbolsPos_: Array<{x: number, y: number}[]>) {
+        this.symbols = new Array<CSymbol>;
+        for(const symbol of symbolInfo_){
             const tempSymbol = new CSymbol(symbol.index, symbol.path);
-            this.symbols.set(symbol.index, tempSymbol);
+            this.symbols.push(tempSymbol);
         }
 
-        console.log(this.symbols);
-
-
-        this.symbolSequence = new Map<number, number[]>;
-        for(let i = 0; i < _sequenceInfo.length; i++){
-            const sequence = _sequenceInfo[i];
-            this.symbolSequence.set(i, sequence.stop);
+        this.symbolSequence = new Array<number[]>;
+        for(let i = 0; i < sequenceInfo_.length; i++){
+            const sequence = sequenceInfo_[i];
+            this.symbolSequence.push(sequence.stop);
         }
 
-        console.log(this.symbolSequence);
+        this.defaultSymbolsPos = new Array<{x: number, y: number}[]>;
+        for(let i = 0; i < defaultSymbolsPos_.length; i++){
+            const defaultSymbolPos = defaultSymbolsPos_[i];
+            this.defaultSymbolsPos.push(defaultSymbolPos);
+        }
     }
 
-    public getSymbolImgPath(index: number) : string {
-        const symbol = this.symbols.get(index);
-        
+    public async loadTextures(){
+        for(const symbol of this.symbols){
+            await symbol.loadTexture();
+        }
+    }
+
+    private getSymbolTexture(index_: number) : Texture | null{
+        const symbol = this.symbols[index_];
         if(symbol == null)
-            return "";
+            return null;
 
-        return symbol.getImgPath();
-    }
-
-    // 다음 심볼 이미지 가져오기
-    public getSymbolImgPathOnSequence(reelIdx: number, sequencePointer: number) : string {
-        const curReelSequenceArray = this.symbolSequence.get(reelIdx);
-        if(curReelSequenceArray == null)
-            return "";
-
-        const arrayLength = curReelSequenceArray.length;
-        if(sequencePointer >= arrayLength){
-            sequencePointer = 0;
-        }
-
-        const imgIdx = curReelSequenceArray[sequencePointer];
-
-        return this.getSymbolImgPath(imgIdx);
+        return symbol.getTexture();
     }
     
-    /* 쓰일지 모르겠음
-    public getSymbolIndexOnSequence(reelIdx: number, sequencePointer: number) : number {
-        const curReelSequenceArray = this.symbolSequence.get(reelIdx);
-        if(curReelSequenceArray == null)
-            return -1;
 
+     // 심볼 시퀀스에서 심볼 텍스쳐 가져오기
+    public getSymbolTextureOnSequence(reelIdx_: number, sequencePointer_: number) : Texture | null{
+        const curReelSequenceArray = this.symbolSequence[reelIdx_];
+        if(curReelSequenceArray == null){
+            return null;
+        }
         const arrayLength = curReelSequenceArray.length;
-        if(sequencePointer >= arrayLength){
-            sequencePointer = 0;
+        if(sequencePointer_ >= arrayLength){
+            sequencePointer_ = 0;
         }
 
-        return curReelSequenceArray[sequencePointer];
+        const imgIdx = curReelSequenceArray[sequencePointer_];
+
+        return this.getSymbolTexture(imgIdx);
     }
-    */
+    
 }

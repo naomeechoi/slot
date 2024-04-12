@@ -1,63 +1,53 @@
 import { Application, Assets, Sprite } from "pixi.js";
-import json from "./assets/data.json";
-import CSymbolManager from "./symbolManager"
-import CRewardManager from "./rewardManager"
+import { APP, SYMBOL_MANAGER, REWARD_MANAGER } from "./singleton"
+import CReel from "./reel"
+const REEL_COUNT = 5;
 
 export default class CSlot {
+    private observerReels: Array<CReel>;
 
-    private symbolManager! : CSymbolManager;
-    private rewardManager! : CRewardManager;
+    constructor(){
+        this.observerReels = new Array<CReel>;
+    }
 
-    public async SetDefaultUI() {
-    
-        // Create a new application
-        const app = new Application();
 
+    public async setBackground() {
         // Initialize the application
-        await app.init({ width:960, height: 720});
+        await APP.init({ width:960, height: 720});
 
         // Append the application canvas to the document body
-        document.body.appendChild(app.canvas);
+        document.body.appendChild(APP.canvas);
 
-        // Load the bunny texture
+        // 백그라운드 텍스쳐 로드
         const texture = await Assets.loader.load('assets/background.png');
 
-        // Create a bunny Sprite
+        // 백그라운드 생성
         const background = new Sprite(texture);
 
         // Move the sprite to the center of the screen
         background.x = 0;
         background.y = 0;
 
-        app.stage.addChild(background);
+        // 백그라운드 이미지가 항상 위로 오도록
+        background.zIndex = 1;
+
+        APP.stage.addChild(background);
     }
 
-    public loadGameElements() : boolean {
-        const DATA_STR = JSON.stringify(json);
-        if(DATA_STR)
-        {
-            if(this.createGameElements(DATA_STR))
-                {
-                    return true;
-                }
-        } 
-        return false;
-    }
-
-    private createGameElements(data: string) : boolean {
-        const JSON_OBJECT = JSON.parse(data);
-        if(JSON_OBJECT === null || JSON_OBJECT === undefined) {
-            return false;
+    public setReel(){
+        for(let i = 0; i < REEL_COUNT; i++){
+            const tempReel = new CReel(i);
+            this.observerReels.push(tempReel);
         }
-
-        // 게임 요소들 만드는 로직
-        this.symbolManager = new CSymbolManager(JSON_OBJECT["SymbolInfo"], JSON_OBJECT["Strip"]);
-        this.rewardManager = new CRewardManager(JSON_OBJECT["PayLines"]);
-
-        return true;
     }
 
-    public mouseEventFromClient(event: MouseEvent) : void {
+    public setReelImg(){
+        for(let i = 0; i < REEL_COUNT; i++){
+            this.observerReels[i].setReelImg();
+        }
+    }
+
+    public mouseEventFromClient(event_: MouseEvent) : void {
         console.log("dddddddddddddd");
     }
 

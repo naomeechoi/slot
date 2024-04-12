@@ -1,13 +1,12 @@
 export default class CRewardManager {
     payLines: Array<Array<number>>;
 
-    constructor(_paylines: Array<Array<number>>) {
+    constructor(payLines_: Array<Array<number>>) {
         this.payLines = new Array<Array<number>>();
         
-        for(const _payline of _paylines){
-            this.payLines.push(_payline);
+        for(const payLine of payLines_){
+            this.payLines.push(payLine);
         }
-       
-        console.log(this.payLines);
+        //console.log(this.payLines);
     }
 }
