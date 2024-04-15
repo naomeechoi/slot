@@ -2,13 +2,13 @@ import { Application, Assets, Sprite, Texture } from "pixi.js";
 import { APP, SYMBOL_MANAGER, REWARD_MANAGER } from "./singleton"
 const SYMBOL_COUNT = 8;
 const LIMIT_Y_POSITION = 660;
-const DEFAULT_Y_POSITION = -204;
-const SPEED = 30;
+const SPEED = 100;
+const Y_GAP = 108;
 
 export default class CReel {
     reelIdx: number;
     symbolSpriteArray: Array<Sprite>;
-    lastSymbol: number;
+    sequencePointer: number;
     isSpinning: boolean;
     
     constructor(reelIdx_: number) {
@@ -26,7 +26,7 @@ export default class CReel {
             }
         }
 
-        this.lastSymbol = SYMBOL_COUNT - 1;
+        this.sequencePointer = SYMBOL_COUNT - 1;
         this.isSpinning = false;
     }
 
@@ -49,15 +49,27 @@ export default class CReel {
         for(let i = 0; i < this.symbolSpriteArray.length; i++){
             const symbolSprite = this.symbolSpriteArray[i];
             symbolSprite.y += SPEED;
+        }
 
-            if(symbolSprite.y >= LIMIT_Y_POSITION){
-                symbolSprite.y = DEFAULT_Y_POSITION;
-                this.lastSymbol++;
-                if(this.lastSymbol > SYMBOL_MANAGER.getSequenceLength(this.reelIdx)){
-                    this.lastSymbol = 0;
-                }
-                symbolSprite.texture = SYMBOL_MANAGER.getSymbolTextureOnSequence(this.reelIdx, this.lastSymbol)!;
+        if(this.symbolSpriteArray[0].y >= LIMIT_Y_POSITION){
+            APP.stage.removeChild(this.symbolSpriteArray[0]);
+            this.symbolSpriteArray.shift();
+
+            // 새로운 심볼 이미지 뒤에 붙여줌
+            const newSymbolImg = new Sprite();
+            const lastImgIdx = this.symbolSpriteArray.length - 1;
+            newSymbolImg.x = this.symbolSpriteArray[lastImgIdx].x;
+
+            // 제일 마지막 심볼 위 y값
+            newSymbolImg.y = this.symbolSpriteArray[lastImgIdx].y - Y_GAP;
+
+            this.sequencePointer++;
+            if(this.sequencePointer > SYMBOL_MANAGER.getSequenceLength(this.reelIdx)){
+                this.sequencePointer = 0;
             }
+            newSymbolImg.texture = SYMBOL_MANAGER.getSymbolTextureOnSequence(this.reelIdx, this.sequencePointer)!;
+            this.symbolSpriteArray.push(newSymbolImg);
+            APP.stage.addChild(newSymbolImg);
         }
     }
 }

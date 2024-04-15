@@ -2,7 +2,8 @@ import { Application, Assets, Sprite } from "pixi.js";
 import { APP, SYMBOL_MANAGER, REWARD_MANAGER } from "./singleton"
 import CReel from "./reel"
 const REEL_COUNT = 5;
-const TERM = 300;
+const SPIN_TERM = 300;
+const SPIN_TIME = 2000;
 
 export default class CSlot {
     private observerReels: Array<CReel>;
@@ -43,21 +44,45 @@ export default class CSlot {
         }
     }
 
-    public update(){
+    public update() : void {
         for(const reel of this.observerReels){
             reel.update();
         }
     }
 
-    public mouseEventFromClient(event_: MouseEvent) : void {
+    private startSpinning() : void {
         for(let i = 0; i < REEL_COUNT; i++){
             setTimeout(() => {
                 this.observerReels[i].setSpinningStatus(true);
-            }, i * TERM);
+                setTimeout(() => {
+                    this.receiveMessageFromServer(0);
+                }, SPIN_TIME);
+            }, i * SPIN_TERM);
         }
     }
 
-    public receiveMessageFromServer() : boolean {
+    private stopSpinning() : void {
+        for(let i = 0; i < REEL_COUNT; i++){
+            setTimeout(() => {
+                this.observerReels[i].setSpinningStatus(false);
+            }, i * SPIN_TERM);
+        }
+    }
+
+    public mouseEventFromClient(event_: MouseEvent) : void {
+        this.startSpinning();
+    }
+
+    public receiveMessageFromServer(message_: number) : boolean {
+        switch(message_) {
+            case 0: {
+                this.stopSpinning();
+            }
+            break;
+            default: {
+
+            }
+        }
         return true;
     }
 
