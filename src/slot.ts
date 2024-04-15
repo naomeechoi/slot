@@ -2,8 +2,8 @@ import { Application, Assets, Sprite } from "pixi.js";
 import { APP, SYMBOL_MANAGER, REWARD_MANAGER } from "./singleton"
 import CReel from "./reel"
 const REEL_COUNT = 5;
-const SPIN_TERM = 300;
-const SPIN_TIME = 2000;
+const SPIN_TERM = 0;
+const SPIN_TIME = 50;
 
 export default class CSlot {
     private observerReels: Array<CReel>;
@@ -36,12 +36,21 @@ export default class CSlot {
         APP.stage.addChild(background);
     }
 
+    private setNextReel(){
+        for(let i = 0; i < REEL_COUNT - 1; i++){
+            this.observerReels[i].setNextReel(this.observerReels[i+1]);
+        }
+    }
+
     public setReel(){
         for(let i = 0; i < REEL_COUNT; i++){
             const tempReel = new CReel(i);
             tempReel.setReelImg();
             this.observerReels.push(tempReel);
+            console.log(SYMBOL_MANAGER.getSequenceLength(i));
         }
+
+        this.setNextReel();
     }
 
     public update() : void {
@@ -53,7 +62,7 @@ export default class CSlot {
     private startSpinning() : void {
         for(let i = 0; i < REEL_COUNT; i++){
             setTimeout(() => {
-                this.observerReels[i].setSpinningStatus(true);
+                this.observerReels[i].start();
                 setTimeout(() => {
                     this.receiveMessageFromServer(0);
                 }, SPIN_TIME);
@@ -61,10 +70,23 @@ export default class CSlot {
         }
     }
 
+    private randomizeStopNumber() : number[] {
+        let tempReelStopNumbers = [];
+        for(let i = 0; i < REEL_COUNT; i++){
+            const reelLength = SYMBOL_MANAGER.getSequenceLength(i);
+            const randomReelNum = Math.floor(Math.random() * reelLength) + 1;
+            tempReelStopNumbers.push(randomReelNum);
+        }
+
+        return tempReelStopNumbers;
+    }
+
     private stopSpinning() : void {
+
+        const reelStopNumbers = this.randomizeStopNumber(); 
         for(let i = 0; i < REEL_COUNT; i++){
             setTimeout(() => {
-                this.observerReels[i].setSpinningStatus(false);
+                this.observerReels[i].readyToStop(reelStopNumbers[i]);
             }, i * SPIN_TERM);
         }
     }
