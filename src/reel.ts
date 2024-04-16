@@ -10,7 +10,7 @@ const Y_POS_GAP = 108; // 심볼 포지션 간격
 const MIN_SPEED = 0.07;
 const MAX_SPEED = 0.02;
 const EXPONENTIAL_SPEED_UP = 0.3;
-const EXPONENTIAL_SPEED_DOWN = 1.1;
+const EXPONENTIAL_SPEED_DOWN = 1.2;
 
 //
 const WAIT_FOR_STOP_SIGN = -1;
@@ -58,7 +58,7 @@ export default class CReel {
 
         if(this.reelIdx == 0) {
             this.isStopPermissionFromPrevReel = true;
-            this.speed = MAX_SPEED;
+            //this.speed = MIN_SPEED / 2;
         } else
         {
             this.isStopPermissionFromPrevReel = false;
@@ -102,7 +102,7 @@ export default class CReel {
         }
 
         // 재귀 호출로 이미지 이동 및 변경
-        TweenMax.to(symbolSprite_, this.speed, { y: MAX_Y_POS - Y_POS_GAP * posOffset_, onComplete: () => {
+        TweenMax.to(symbolSprite_, this.speed, { y: symbolSprite_.y + Y_POS_GAP, onComplete: () => {
             posOffset_--;
             if(posOffset_ < 0) {
                 posOffset_ = this.symbolSpriteArray.length - 1;
