@@ -69,8 +69,8 @@ export default class CSlot {
         }
     }
 
-    private randomizeStopNumber() : number[] {
-        let tempReelStopNumbers :number[] = [];
+    private randomizeStopNumber() : Array<number> {
+        let tempReelStopNumbers : Array<number> = [];
         for(let i = 0; i < REEL_COUNT; i++){
             const reelLength = SYMBOL_MANAGER.getSequenceLength(i);
             const randomReelNum = Math.floor(Math.random() * reelLength) + 1;

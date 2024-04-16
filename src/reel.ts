@@ -31,7 +31,7 @@ export default class CReel {
         this.reelIdx = reelIdx_;
         this.symbolSpriteArray = new Array<Sprite>;
 
-        const symbolsPosOnReel: {x: number, y: number}[] = SYMBOL_MANAGER.defaultSymbolsPos[this.reelIdx];
+        const symbolsPosOnReel: Array<{x: number, y: number}> = SYMBOL_MANAGER.defaultSymbolsPos[this.reelIdx];
         if(symbolsPosOnReel != null){
             for(let i = 0; i < symbolsPosOnReel.length; i++){
                 const tempSymbolImg = new Sprite();

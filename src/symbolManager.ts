@@ -29,23 +29,23 @@ class CSymbol {
 
 export default class CSymbolManager {
     symbols: Array<CSymbol>;
-    symbolSequence: Array<number[]>;
-    defaultSymbolsPos: Array<{x: number, y: number}[]>;
+    symbolSequence: Array<Array<number>>;
+    defaultSymbolsPos: Array<Array<{x: number, y: number}>>;
 
-    constructor(symbolInfo_: Array<{index: number, path: string}>, sequenceInfo_: Array<{stop: number[]}>, defaultSymbolsPos_: Array<{x: number, y: number}[]>) {
+    constructor(symbolInfo_: Array<{index: number, path: string}>, sequenceInfo_: Array<{stop: Array<number>}>, defaultSymbolsPos_: Array<Array<{x: number, y: number}>>) {
         this.symbols = new Array<CSymbol>;
         for(const symbol of symbolInfo_){
             const tempSymbol = new CSymbol(symbol.index, symbol.path);
             this.symbols.push(tempSymbol);
         }
 
-        this.symbolSequence = new Array<number[]>;
+        this.symbolSequence = new Array<Array<number>>;
         for(let i = 0; i < sequenceInfo_.length; i++){
             const sequence = sequenceInfo_[i];
             this.symbolSequence.push(sequence.stop);
         }
 
-        this.defaultSymbolsPos = new Array<{x: number, y: number}[]>;
+        this.defaultSymbolsPos = new Array<Array<{x: number, y: number}>>;
         for(let i = 0; i < defaultSymbolsPos_.length; i++){
             const defaultSymbolPos = defaultSymbolsPos_[i];
             this.defaultSymbolsPos.push(defaultSymbolPos);
