@@ -5,13 +5,14 @@
     "sourceMap": true,
 
     "strict": true,
-    "noImplicitAny": true,
+    "noImplicitAny": false,
 
     "moduleResolution": "node",
 
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
+    "allowJs" : false,
   },
   "files": ["src/index.ts"],
   "include": [

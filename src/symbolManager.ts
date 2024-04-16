@@ -52,7 +52,7 @@ export default class CSymbolManager {
         }
     }
 
-    public async loadTextures(){
+    public async loadTextures() {
         for(const symbol of this.symbols){
             await symbol.loadTexture();
         }
@@ -75,7 +75,7 @@ export default class CSymbolManager {
         return curReelSequenceArray.length;
     }
 
-     // 심볼 시퀀스에서 심볼 텍스쳐 가져오기lastSymbol: {idx: number};
+     // 심볼 시퀀스에서 심볼 텍스쳐 가져오기 lastSymbol: {idx: number};
     public getSymbolTextureOnSequence(reelIdx_: number, sequencePointer_: number) : Texture | null{
         const curReelSequenceArray = this.symbolSequence[reelIdx_];
         if(curReelSequenceArray == null){

@@ -3,7 +3,7 @@ import { APP, SYMBOL_MANAGER, REWARD_MANAGER } from "./singleton"
 import CReel from "./reel"
 const REEL_COUNT = 5;
 const SPIN_TERM = 0;
-const SPIN_TIME = 50;
+const SPIN_TIME = 0;
 
 export default class CSlot {
     private observerReels: Array<CReel>;
@@ -11,7 +11,6 @@ export default class CSlot {
     constructor(){
         this.observerReels = new Array<CReel>;
     }
-
 
     public async setBackground() {
         // Initialize the application
@@ -36,18 +35,18 @@ export default class CSlot {
         APP.stage.addChild(background);
     }
 
-    private setNextReel(){
+    // 릴 하나가 스핀이 끝났을 때 다음 릴에게 종료 가능 사인을 보내주기 위해 추가
+    private setNextReel() : void {
         for(let i = 0; i < REEL_COUNT - 1; i++){
             this.observerReels[i].setNextReel(this.observerReels[i+1]);
         }
     }
 
-    public setReel(){
+    public setReel() : void {
         for(let i = 0; i < REEL_COUNT; i++){
             const tempReel = new CReel(i);
             tempReel.setReelImg();
             this.observerReels.push(tempReel);
-            console.log(SYMBOL_MANAGER.getSequenceLength(i));
         }
 
         this.setNextReel();
@@ -71,7 +70,7 @@ export default class CSlot {
     }
 
     private randomizeStopNumber() : number[] {
-        let tempReelStopNumbers = [];
+        let tempReelStopNumbers :number[] = [];
         for(let i = 0; i < REEL_COUNT; i++){
             const reelLength = SYMBOL_MANAGER.getSequenceLength(i);
             const randomReelNum = Math.floor(Math.random() * reelLength) + 1;
@@ -82,7 +81,6 @@ export default class CSlot {
     }
 
     private stopSpinning() : void {
-
         const reelStopNumbers = this.randomizeStopNumber(); 
         for(let i = 0; i < REEL_COUNT; i++){
             setTimeout(() => {

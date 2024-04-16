@@ -30,7 +30,6 @@ const config = {
               { from: 'src/assets', to: 'assets' },
             ],
           }),
-
         // Add your plugins here
         // Learn more about plugins from https://webpack.js.org/configuration/plugins/
     ],
@@ -53,6 +52,11 @@ const config = {
             {
                 test: /\.json$/i,
                 type: 'json'
+            },
+            {
+                test: /\.js$/i,
+                loader: 'babel-loader',
+                exclude: '/node_modules/',
             },
             // Add your rules for custom modules here
             // Learn more about loaders from https://webpack.js.org/loaders/
