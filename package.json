@@ -37,6 +37,7 @@
     "start": "webpack serve --open"
   },
   "dependencies": {
+    "firebase": "^10.11.0",
     "gsap": "^2.1.3",
     "pixi.js": "^8.0.5"
   }
