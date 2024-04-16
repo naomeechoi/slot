@@ -91,11 +91,18 @@ export default class CReel {
     }
 
     private moveSymbolTweenMax(symbolSprite_ : Sprite, posOffset_: number) : void {
+        const EFFECT_GAP = 150;
+        const DELAY = 0.02;
+        // 스핀 스탑할 때 텅하는 효과, 재귀 종료
+        if(this.isSpinning == false) {
+            TweenMax.to(symbolSprite_, this.speed, { y: MAX_Y_POS - Y_POS_GAP * posOffset_ + EFFECT_GAP, onComplete: () => {
+                TweenMax.to(symbolSprite_, this.speed, { y: symbolSprite_.y - EFFECT_GAP, delay: DELAY})
+            }})
+            return;
+        }
+
+        // 재귀 호출로 이미지 이동 및 변경
         TweenMax.to(symbolSprite_, this.speed, { y: MAX_Y_POS - Y_POS_GAP * posOffset_, onComplete: () => {
-
-            if(this.isSpinning == false)
-                return;
-
             posOffset_--;
             if(posOffset_ < 0) {
                 posOffset_ = this.symbolSpriteArray.length - 1;
