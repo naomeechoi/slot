@@ -6,8 +6,8 @@ const MAX_Y_POS = 660;
 const Y_POS_GAP = 108; // 심볼 포지션 간격
 
 // 릴 스핀 속도 관련
-const MIN_SPEED = 0.007;
-const MAX_SPEED = 0.002;
+const MIN_SPEED = 0.07;
+const MAX_SPEED = 0.02;
 const EXPONENTIAL_SPEED_UP = 0.3;
 const EXPONENTIAL_SPEED_DOWN = 1.1;
 
@@ -95,14 +95,14 @@ export default class CReel {
         const DELAY = 0.04;
         // 스핀 스탑할 때 텅하는 효과, 재귀 종료
         if(this.isSpinning == false) {
-            TweenMax.to(symbolSprite_, this.speed, { y: MAX_Y_POS - Y_POS_GAP * posOffset_ + MOVE_GAP, onComplete: () => {
+            TweenMax.to(symbolSprite_, this.speed, { y: MAX_Y_POS - Y_POS_GAP * (posOffset_ + 1) + MOVE_GAP, onComplete: () => {
                 TweenMax.to(symbolSprite_, this.speed, { y: symbolSprite_.y - MOVE_GAP, delay: DELAY})
             }})
             return;
         }
 
         // 재귀 호출로 이미지 이동 및 변경
-        TweenMax.to(symbolSprite_, this.speed, { y: symbolSprite_.y + MOVE_GAP, onComplete: () => {
+        TweenMax.to(symbolSprite_, this.speed, { y: symbolSprite_.y + Y_POS_GAP, onComplete: () => {
             posOffset_--;
             if(posOffset_ < 0) {
                 posOffset_ = this.symbolSpriteArray.length - 1;
