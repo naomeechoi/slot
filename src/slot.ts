@@ -6,10 +6,10 @@ const SPIN_TERM = 0;
 const SPIN_TIME = 0;
 
 export default class CSlot {
-    private observerReels: Array<CReel>;
+    private observerReels: CReel[];
 
     constructor(){
-        this.observerReels = new Array<CReel>;
+        this.observerReels = [];
     }
 
     public async setBackground() {

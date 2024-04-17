@@ -2,15 +2,14 @@ import { Application, Assets, Sprite, Texture } from "pixi.js";
 import { TweenMax } from 'gsap/TweenMax';
 import { APP, SYMBOL_MANAGER, REWARD_MANAGER } from "./singleton"
 
-const SYMBOL_COUNT = 8;
 const MAX_Y_POS = 660;
 const Y_POS_GAP = 108; // 심볼 포지션 간격
 
 // 릴 스핀 속도 관련
-const MIN_SPEED = 0.07;
-const MAX_SPEED = 0.02;
+const MIN_SPEED = 0.007;
+const MAX_SPEED = 0.002;
 const EXPONENTIAL_SPEED_UP = 0.3;
-const EXPONENTIAL_SPEED_DOWN = 1.2;
+const EXPONENTIAL_SPEED_DOWN = 1.1;
 
 //
 const WAIT_FOR_STOP_SIGN = -1;
@@ -42,7 +41,7 @@ export default class CReel {
             }
         }
 
-        this.sequencePointer = SYMBOL_COUNT - 1;
+        this.sequencePointer = this.symbolSpriteArray.length - 1;
         this.isSpinning = false;
 
         this.nextReel = null;
@@ -84,25 +83,26 @@ export default class CReel {
     }
 
     private spin() : void {
-        for(let i = 0; i < this.symbolSpriteArray.length; i++){
-            const symbolSprite = this.symbolSpriteArray[i];
+        const symbolSpriteArrayCopy = this.symbolSpriteArray.slice();
+        for (let i = 0; i < symbolSpriteArrayCopy.length; i++) {
+            const symbolSprite = symbolSpriteArrayCopy[i];
             this.moveSymbolTweenMax(symbolSprite, i);
         }
     }
 
     private moveSymbolTweenMax(symbolSprite_ : Sprite, posOffset_: number) : void {
-        const EFFECT_GAP = 150;
-        const DELAY = 0.02;
+        const MOVE_GAP = 50;
+        const DELAY = 0.04;
         // 스핀 스탑할 때 텅하는 효과, 재귀 종료
         if(this.isSpinning == false) {
-            TweenMax.to(symbolSprite_, this.speed, { y: MAX_Y_POS - Y_POS_GAP * posOffset_ + EFFECT_GAP, onComplete: () => {
-                TweenMax.to(symbolSprite_, this.speed, { y: symbolSprite_.y - EFFECT_GAP, delay: DELAY})
+            TweenMax.to(symbolSprite_, this.speed, { y: MAX_Y_POS - Y_POS_GAP * posOffset_ + MOVE_GAP, onComplete: () => {
+                TweenMax.to(symbolSprite_, this.speed, { y: symbolSprite_.y - MOVE_GAP, delay: DELAY})
             }})
             return;
         }
 
         // 재귀 호출로 이미지 이동 및 변경
-        TweenMax.to(symbolSprite_, this.speed, { y: symbolSprite_.y + Y_POS_GAP, onComplete: () => {
+        TweenMax.to(symbolSprite_, this.speed, { y: symbolSprite_.y + MOVE_GAP, onComplete: () => {
             posOffset_--;
             if(posOffset_ < 0) {
                 posOffset_ = this.symbolSpriteArray.length - 1;

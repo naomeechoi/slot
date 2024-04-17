@@ -1,8 +1,8 @@
 export default class CRewardManager {
-    payLines: Array<Array<number>>;
+    payLines: number[][]; // Array<Array[number]>> [[1, 2], [1, 2], ]
 
-    constructor(payLines_: Array<Array<number>>) {
-        this.payLines = new Array<Array<number>>();
+    constructor(payLines_: number[][]) {
+        this.payLines = [];
         
         for(const payLine of payLines_){
             this.payLines.push(payLine);
