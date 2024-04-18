@@ -6,10 +6,10 @@ const SPIN_TERM = 0;
 const SPIN_TIME = 0;
 
 export default class CSlot {
-    private observerReels: CReel[];
+    private observerReels: CReel[] = [];
+    private isPayLinesCheck: boolean = false;
 
     constructor(){
-        this.observerReels = [];
     }
 
     public async setBackground() {
@@ -56,6 +56,31 @@ export default class CSlot {
         for(const reel of this.observerReels){
             reel.update();
         }
+
+        if(this.isPayLinesCheck) {
+            let checkCount = 0;
+            for(const reel of this.observerReels){
+                if(reel.getCheckPossibility()) {
+                    checkCount++;
+                }
+            }
+
+            if(checkCount == REEL_COUNT) {
+                let symbolsIdxOnSlot: number[] = [];
+
+                for(let i = 0; i < 4; i++) {
+                    for(let j = 0; j < this.observerReels.length; j++) {
+                        let tempArray = this.observerReels[j].stopSymbolIdxArray;
+                        //console.log(tempArray);
+                        symbolsIdxOnSlot.push(tempArray[i]);
+                    }
+                }
+                
+                REWARD_MANAGER.checkMatchingToPayLines(symbolsIdxOnSlot);
+                //console.log(symbolsIdxOnSlot);
+                this.isPayLinesCheck = false;
+            }
+        }
     }
 
     private startSpinning() : void {
@@ -64,9 +89,12 @@ export default class CSlot {
                 this.observerReels[i].start();
                 setTimeout(() => {
                     this.receiveMessageFromServer(0);
+                    this.isPayLinesCheck = true;
                 }, SPIN_TIME);
             }, i * SPIN_TERM);
         }
+
+        REWARD_MANAGER.clearLines();
     }
 
     private randomizeStopNumber() : Array<number> {

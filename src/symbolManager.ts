@@ -66,6 +66,16 @@ export default class CSymbolManager {
         return symbol.getTexture();
     }
 
+    public getSymbolIdxByTexture(texture_: Texture): number | null {
+        for(const symbol of this.symbols) {
+            if(symbol.getTexture() == texture_) {
+                return symbol.getIndex();
+            }
+        }
+
+        return null;
+    }
+
     public getSequenceLength(reelIdx_: number) {
         const curReelSequenceArray = this.symbolSequence[reelIdx_];
         if(curReelSequenceArray == null){
@@ -90,5 +100,4 @@ export default class CSymbolManager {
 
         return this.getSymbolTexture(imgIdx);
     }
-    
 }

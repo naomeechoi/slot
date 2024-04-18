@@ -1,4 +1,4 @@
-import { Application, Assets, Sprite, Texture } from "pixi.js";
+import { Application, Assets, Sprite, Text } from "pixi.js";
 import { TweenMax } from 'gsap/TweenMax';
 import { APP, SYMBOL_MANAGER, REWARD_MANAGER } from "./singleton"
 
@@ -25,6 +25,8 @@ export default class CReel {
     nextReel: CReel | null;
     isStopPermissionFromPrevReel!: boolean;
     isStopPermissionFromSelf!: boolean;
+    stopSymbolIdxArray: Array<number> = [];
+    stopCount!: number;
     
     constructor(reelIdx_: number) {
         this.reelIdx = reelIdx_;
@@ -46,6 +48,13 @@ export default class CReel {
 
         this.nextReel = null;
         this.defaultSetting();
+
+        for(let i = 0; i < 4; i++) {
+            this.stopSymbolIdxArray.push(i);
+        }
+        //1, 2, 3, 4 번이 화면에 보이는 슬롯
+
+        this.stopCount = 0;
     }
 
     private defaultSetting() : void {
@@ -79,6 +88,7 @@ export default class CReel {
 
     public start() : void {
         this.isSpinning = true;
+        this.stopCount = 0;
         this.spin();
     }
 
@@ -96,6 +106,13 @@ export default class CReel {
         // 스핀 스탑할 때 텅하는 효과, 재귀 종료
         if(this.isSpinning == false) {
             TweenMax.to(symbolSprite_, this.speed, { y: MAX_Y_POS - Y_POS_GAP * (posOffset_ + 1) + MOVE_GAP, onComplete: () => {
+                if(posOffset_ >= 1 && posOffset_ <= 4) {
+                    let idx = SYMBOL_MANAGER.getSymbolIdxByTexture(symbolSprite_.texture);
+                    if(idx != null) {
+                        this.stopSymbolIdxArray[5 - posOffset_ - 1] = idx;
+                        this.stopCount ++;
+                    }
+                }
                 TweenMax.to(symbolSprite_, this.speed, { y: symbolSprite_.y - MOVE_GAP, delay: DELAY})
             }})
             return;
@@ -197,5 +214,13 @@ export default class CReel {
                 this.defaultSetting();
             }
         }
+    }
+
+    public getCheckPossibility() : boolean {
+        if(this.stopCount == 4) {
+            return true;
+        }
+
+        return false;
     }
 }
