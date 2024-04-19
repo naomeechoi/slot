@@ -8,6 +8,7 @@ const SPIN_TIME = 0;
 export default class CSlot {
     private observerReels: CReel[] = [];
     private isPayLinesCheck: boolean = false;
+    private bCanStart: boolean = true;
 
     constructor(){
     }
@@ -79,11 +80,20 @@ export default class CSlot {
                 REWARD_MANAGER.checkMatchingToPayLines(symbolsIdxOnSlot);
                 //console.log(symbolsIdxOnSlot);
                 this.isPayLinesCheck = false;
+
+                setTimeout(() => {
+                    this.bCanStart = true;
+                }, 1000);
+                
             }
         }
     }
 
     private startSpinning() : void {
+        if(this.bCanStart == false)
+            return;
+        
+        this.bCanStart = false;
         for(let i = 0; i < REEL_COUNT; i++){
             setTimeout(() => {
                 this.observerReels[i].start();
