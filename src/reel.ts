@@ -14,9 +14,19 @@ const EXPONENTIAL_SPEED_DOWN = 1.1;
 //
 const WAIT_FOR_STOP_SIGN = -1;
 
+class CSymbol {
+    sprite: Sprite;
+    idx: number;
+
+    constructor(sprite_: Sprite, idx_: number) {
+        this.sprite = sprite_;
+        this.idx = idx_;
+    }
+}
+
 export default class CReel {
     reelIdx: number;
-    symbolSpriteArray: Array<Sprite>;
+    symbolArray: Array<CSymbol> = [];
     sequencePointer: number;
     isSpinning: boolean;
     speed!: number;
@@ -30,7 +40,6 @@ export default class CReel {
     
     constructor(reelIdx_: number) {
         this.reelIdx = reelIdx_;
-        this.symbolSpriteArray = new Array<Sprite>;
 
         const symbolsPosOnReel: Array<{x: number, y: number}> = SYMBOL_MANAGER.defaultSymbolsPos[this.reelIdx];
         if(symbolsPosOnReel != null){
@@ -39,11 +48,13 @@ export default class CReel {
 
                 tempSymbolImg.x = symbolsPosOnReel[i].x;
                 tempSymbolImg.y = symbolsPosOnReel[i].y;
-                this.symbolSpriteArray.push(tempSymbolImg);
+
+                const tempSymbol: CSymbol= new CSymbol(tempSymbolImg, i);
+                this.symbolArray.push(tempSymbol);
             }
         }
 
-        this.sequencePointer = this.symbolSpriteArray.length - 1;
+        this.sequencePointer = this.symbolArray.length - 1;
         this.isSpinning = false;
 
         this.nextReel = null;
@@ -75,10 +86,10 @@ export default class CReel {
     }
 
     public setReelImg() : void {
-        for(let i = 0; i < this.symbolSpriteArray.length; i++){
-            const symbolSprite = this.symbolSpriteArray[i];
-            symbolSprite.texture = SYMBOL_MANAGER.getSymbolTextureOnSequence(this.reelIdx, i)!;
-            APP.stage.addChild(symbolSprite);
+        for(let i = 0; i < this.symbolArray.length; i++){
+            const symbol = this.symbolArray[i];
+            symbol.sprite.texture = SYMBOL_MANAGER.getSymbolTextureOnSequence(this.reelIdx, i)!;
+            APP.stage.addChild(symbol.sprite);
         }
     }
 
@@ -93,66 +104,71 @@ export default class CReel {
     }
 
     private spin() : void {
-        const symbolSpriteArrayCopy = this.symbolSpriteArray.slice();
-        for (let i = 0; i < symbolSpriteArrayCopy.length; i++) {
-            const symbolSprite = symbolSpriteArrayCopy[i];
-            this.moveSymbolTweenMax(symbolSprite, i);
+
+        const clonedArray = [...this.symbolArray];
+        for (const symbol of clonedArray) {
+            //console.log(clonedArray.length);
+            this.moveSymbolTweenMax(symbol);
         }
     }
 
-    private moveSymbolTweenMax(symbolSprite_ : Sprite, posOffset_: number) : void {
+    private moveSymbolTweenMax(symbol_ : CSymbol) : void {
         const MOVE_GAP = 50;
         const DELAY = 0.04;
         // 스핀 스탑할 때 텅하는 효과, 재귀 종료
-        if(this.isSpinning == false) {
-            TweenMax.to(symbolSprite_, this.speed, { y: MAX_Y_POS - Y_POS_GAP * (posOffset_ + 1) + MOVE_GAP, onComplete: () => {
-                if(posOffset_ >= 1 && posOffset_ <= 4) {
-                    let idx = SYMBOL_MANAGER.getSymbolIdxByTexture(symbolSprite_.texture);
-                    if(idx != null) {
-                        this.stopSymbolIdxArray[4 - posOffset_] = idx;
-                        this.stopCount ++;
-                    }
-                }
-                TweenMax.to(symbolSprite_, this.speed, { y: symbolSprite_.y - MOVE_GAP, delay: DELAY})
-            }})
-            return;
-        }
 
-        // 재귀 호출로 이미지 이동 및 변경
-        TweenMax.to(symbolSprite_, this.speed, { y: symbolSprite_.y + Y_POS_GAP, onComplete: () => {
-            posOffset_--;
-            if(posOffset_ < 0) {
-                posOffset_ = this.symbolSpriteArray.length - 1;
-            } 
-            console.log(posOffset_);
-            this.moveSymbolTweenMax(this.updateImg(symbolSprite_), posOffset_);
+            // 재귀 호출로 이미지 이동 및 변경
+        TweenMax.to(symbol_.sprite, this.speed, { y: symbol_.sprite.y + Y_POS_GAP, onComplete: () => {
+            
+            symbol_.idx++;
+            if(symbol_.idx >= this.symbolArray.length) {
+                symbol_.idx = 0;
+            }
+
+            if(this.isSpinning == false) {
+                TweenMax.to(symbol_.sprite, this.speed, { y: 552 - Y_POS_GAP * (symbol_.idx) + MOVE_GAP, onComplete: () => {
+                    if(symbol_.idx >= 1 && symbol_.idx <= 4) {
+                        let symbolIdentity = SYMBOL_MANAGER.getSymbolIdxByTexture(symbol_.sprite.texture);
+                        if(symbolIdentity != null) {
+                            this.stopSymbolIdxArray[4 - symbol_.idx] = symbolIdentity;
+                            this.stopCount++;
+                        }
+                    }
+                    TweenMax.to(symbol_.sprite, DELAY, { y: symbol_.sprite.y - MOVE_GAP, delay: DELAY})
+                }});
+                return;
+            }
+            else {
+                this.updateImg(symbol_);
+                this.moveSymbolTweenMax(symbol_);
+            }
         }})
+        
     }
 
-    private updateImg(target_ : Sprite) : Sprite {
-        if(target_.y >= MAX_Y_POS){
-            APP.stage.removeChild(target_);
-            this.symbolSpriteArray = this.symbolSpriteArray.filter(item => item !== target_);
+    private updateImg(target_ : CSymbol) {
+        if(target_.sprite.y >= MAX_Y_POS){
+           // APP.stage.removeChild(target_.sprite);
+            this.symbolArray = this.symbolArray.filter(item => item !== target_);
 
             // 새로운 심볼 이미지 뒤에 붙여줌
-            const newSymbolImg = new Sprite();
-            const lastImgIdx = this.symbolSpriteArray.length - 1;
-            newSymbolImg.x = this.symbolSpriteArray[lastImgIdx].x;
+           // const newSymbolImg = new Sprite();
+            const lastImgIdx = this.symbolArray.length - 1;
+           // newSymbolImg.x = this.symbolArray[lastImgIdx].sprite.x;
 
             // 제일 마지막 심볼 위 y값
-            newSymbolImg.y = this.symbolSpriteArray[lastImgIdx].y - Y_POS_GAP;
+            target_.sprite.y = this.symbolArray[lastImgIdx].sprite.y - Y_POS_GAP;
 
             this.sequencePointer++;
             if(this.sequencePointer >= SYMBOL_MANAGER.getSequenceLength(this.reelIdx)){
                 this.sequencePointer = 0;
             }
-            newSymbolImg.texture = SYMBOL_MANAGER.getSymbolTextureOnSequence(this.reelIdx, this.sequencePointer)!;
-            this.symbolSpriteArray.push(newSymbolImg);
-            APP.stage.addChild(newSymbolImg);
+            target_.sprite.texture = SYMBOL_MANAGER.getSymbolTextureOnSequence(this.reelIdx, this.sequencePointer)!;
+            this.symbolArray.push(target_);
 
-            return newSymbolImg;
+            //console.log(prv + "aa"  + target_.idx);
+            //APP.stage.addChild(newSymbolImg);
         }
-        return target_;
     }
 
     public readyToStop(stopPointer_: number) : void {

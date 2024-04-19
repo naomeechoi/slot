@@ -1,6 +1,6 @@
 import { Application, Assets, Sprite, Texture } from "pixi.js";
 
-class CSymbol {
+class CSymbolImg {
     private readonly index: number;
     private readonly imgPath: string;
     private texture!: any;
@@ -28,14 +28,14 @@ class CSymbol {
 }
 
 export default class CSymbolManager {
-    symbols: Array<CSymbol>;
+    symbols: Array<CSymbolImg>;
     symbolSequence: Array<Array<number>>;
     defaultSymbolsPos: Array<Array<{x: number, y: number}>>;
 
     constructor(symbolInfo_: Array<{index: number, path: string}>, sequenceInfo_: Array<{stop: Array<number>}>, defaultSymbolsPos_: Array<Array<{x: number, y: number}>>) {
-        this.symbols = new Array<CSymbol>;
+        this.symbols = new Array<CSymbolImg>;
         for(const symbol of symbolInfo_){
-            const tempSymbol = new CSymbol(symbol.index, symbol.path);
+            const tempSymbol = new CSymbolImg(symbol.index, symbol.path);
             this.symbols.push(tempSymbol);
         }
 
