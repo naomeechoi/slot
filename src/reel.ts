@@ -124,6 +124,7 @@ export default class CReel {
             if(posOffset_ < 0) {
                 posOffset_ = this.symbolSpriteArray.length - 1;
             } 
+            console.log(posOffset_);
             this.moveSymbolTweenMax(this.updateImg(symbolSprite_), posOffset_);
         }})
     }
@@ -131,7 +132,7 @@ export default class CReel {
     private updateImg(target_ : Sprite) : Sprite {
         if(target_.y >= MAX_Y_POS){
             APP.stage.removeChild(target_);
-            this.symbolSpriteArray.shift();
+            this.symbolSpriteArray = this.symbolSpriteArray.filter(item => item !== target_);
 
             // 새로운 심볼 이미지 뒤에 붙여줌
             const newSymbolImg = new Sprite();
@@ -142,7 +143,7 @@ export default class CReel {
             newSymbolImg.y = this.symbolSpriteArray[lastImgIdx].y - Y_POS_GAP;
 
             this.sequencePointer++;
-            if(this.sequencePointer > SYMBOL_MANAGER.getSequenceLength(this.reelIdx)){
+            if(this.sequencePointer >= SYMBOL_MANAGER.getSequenceLength(this.reelIdx)){
                 this.sequencePointer = 0;
             }
             newSymbolImg.texture = SYMBOL_MANAGER.getSymbolTextureOnSequence(this.reelIdx, this.sequencePointer)!;
