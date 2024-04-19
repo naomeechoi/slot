@@ -109,7 +109,7 @@ export default class CReel {
                 if(posOffset_ >= 1 && posOffset_ <= 4) {
                     let idx = SYMBOL_MANAGER.getSymbolIdxByTexture(symbolSprite_.texture);
                     if(idx != null) {
-                        this.stopSymbolIdxArray[5 - posOffset_ - 1] = idx;
+                        this.stopSymbolIdxArray[4 - posOffset_] = idx;
                         this.stopCount ++;
                     }
                 }
