@@ -1,13 +1,14 @@
 import { Sprite, Graphics } from 'pixi.js';
 import { APP, SYMBOL_MANAGER } from './singleton';
 
-const SHOW_LINE_TIME = 500;
+const SHOW_LINE_TIME = 800;
 
 ///////////////////////////////////////////////////////////////////////////////
 export default class CRewardManager {
     private static instance: CRewardManager | null = null;
     private readonly payLines: number[][] = [];
     private matchedLines: number[][] = [];
+    private matchedSprites: Sprite[][] = [];
     private lineGraphics: Graphics[] = [];
 
     private constructor(payLines_: {line: number[]}[]) {
@@ -34,8 +35,9 @@ export default class CRewardManager {
     public checkPayLines(symbolSpritesArray_: Sprite[]): void {
         for(const payLine of this.payLines) {
 
-            let prevSymbolIdx = -1;
-            let consecutiveCount = 0;
+            let prevSymbolIdx: number = -1;
+            let consecutiveCount: number = 0;
+            let matchedSprite: Sprite[] = [];
             for(const lineElement of payLine) {
                 let symbolUniqueNum = SYMBOL_MANAGER.getSymbolUniqueNumByTexture(symbolSpritesArray_[lineElement].texture);
                 if(symbolUniqueNum == null) {
@@ -44,10 +46,12 @@ export default class CRewardManager {
 
                 if(prevSymbolIdx == -1) {
                     prevSymbolIdx = symbolUniqueNum;
+                    matchedSprite.push(symbolSpritesArray_[lineElement]);
                     continue;
                 }
 
                 if(prevSymbolIdx == symbolUniqueNum) {
+                    matchedSprite.push(symbolSpritesArray_[lineElement]);
                     consecutiveCount++;
                 }
                 else {
@@ -57,6 +61,7 @@ export default class CRewardManager {
 
             if(consecutiveCount > 0) {
                 this.matchedLines.push(payLine);
+                this.matchedSprites.push(matchedSprite);
             }
         }
         this.drawLines();
@@ -131,6 +136,8 @@ export default class CRewardManager {
         else {
             if(this.lineGraphics[nextVisibleLineIdx_] != null) {
                 this.lineGraphics[nextVisibleLineIdx_].visible = true;
+                let tempBlink: {count: number} = {count: 0};
+                this.symbolEffect(nextVisibleLineIdx_, true, tempBlink);
             }
         }
 
@@ -138,6 +145,19 @@ export default class CRewardManager {
             nextVisibleLineIdx_++;
             this.drawLinesOneByOne(nextVisibleLineIdx_);
         }, SHOW_LINE_TIME);
+    }
+
+    private symbolEffect(curLineIdx_: number, bVisible_: boolean, blink_: {count: number}): void {
+        for(let symbolSprite of this.matchedSprites[curLineIdx_]) {
+            symbolSprite.visible = bVisible_;
+        }
+
+        if(blink_.count < 4) {
+            blink_.count++;
+            setTimeout(() => {
+                this.symbolEffect(curLineIdx_, !bVisible_, blink_);
+            }, SHOW_LINE_TIME / 4);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////
