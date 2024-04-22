@@ -44,7 +44,6 @@ export default class CRewardManager {
             }
         }
         this.drawLines();
-        console.log(this.matchedLines);
     }
     
     private drawLines() {

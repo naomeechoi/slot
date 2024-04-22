@@ -67,19 +67,24 @@ export default class CSlot {
             }
 
             if(checkCount == REEL_COUNT) {
+                this.isPayLinesCheck = false;
+
                 let symbolsIdxOnSlot: number[] = [];
 
                 for(let i = 0; i < 4; i++) {
                     for(let j = 0; j < this.observerReels.length; j++) {
-                        let tempArray = this.observerReels[j].stopSymbolIdxArray;
-                        //console.log(tempArray);
-                        symbolsIdxOnSlot.push(tempArray[i]);
+                        const symbolIdentifyIdx = this.observerReels[j].symbolsOnScreenMap.get(i);
+                        if(symbolIdentifyIdx != null) {
+                            symbolsIdxOnSlot.push(symbolIdentifyIdx);
+                        } 
                     }
                 }
                 
+                for(let j = 0; j < this.observerReels.length; j++) {
+                    this.observerReels[j].symbolsOnScreenMap.clear();
+                }
+
                 REWARD_MANAGER.checkMatchingToPayLines(symbolsIdxOnSlot);
-                //console.log(symbolsIdxOnSlot);
-                this.isPayLinesCheck = false;
 
                 setTimeout(() => {
                     this.bCanStart = true;

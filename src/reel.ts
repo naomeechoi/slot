@@ -2,7 +2,6 @@ import { Application, Assets, Sprite, Text } from "pixi.js";
 import { TweenMax } from 'gsap/TweenMax';
 import { APP, SYMBOL_MANAGER, REWARD_MANAGER } from "./singleton"
 
-const MAX_Y_POS = 660;
 const Y_POS_GAP = 108; // 심볼 포지션 간격
 
 // 릴 스핀 속도 관련
@@ -14,13 +13,15 @@ const EXPONENTIAL_SPEED_DOWN = 1.1;
 //
 const WAIT_FOR_STOP_SIGN = -1;
 
+const SYMBOLS_ON_SCREEN_LENGTH = 4;
+
 class CSymbol {
     sprite: Sprite;
-    idx: number;
+    originalIdx: number;
 
     constructor(sprite_: Sprite, idx_: number) {
         this.sprite = sprite_;
-        this.idx = idx_;
+        this.originalIdx = idx_;
     }
 }
 
@@ -35,8 +36,7 @@ export default class CReel {
     nextReel: CReel | null;
     isStopPermissionFromPrevReel!: boolean;
     isStopPermissionFromSelf!: boolean;
-    stopSymbolIdxArray: Array<number> = [];
-    stopCount!: number;
+    symbolsOnScreenMap: Map<number, number> = new Map();
     
     constructor(reelIdx_: number) {
         this.reelIdx = reelIdx_;
@@ -60,12 +60,7 @@ export default class CReel {
         this.nextReel = null;
         this.defaultSetting();
 
-        for(let i = 0; i < 4; i++) {
-            this.stopSymbolIdxArray.push(i);
-        }
         //1, 2, 3, 4 번이 화면에 보이는 슬롯
-
-        this.stopCount = 0;
         this.stopPointer = WAIT_FOR_STOP_SIGN;
     }
 
@@ -99,7 +94,7 @@ export default class CReel {
 
     public start() : void {
         this.isSpinning = true;
-        this.stopCount = 0;
+        this.symbolsOnScreenMap.clear();
         this.stopPointer = WAIT_FOR_STOP_SIGN;
         this.spin();
     }
@@ -112,26 +107,37 @@ export default class CReel {
         }
     }
 
+    private isSymbolOnScreen(idxOnArray: number): boolean {
+        const SYMBOL_ON_SCREEN_START_IDX = 1;
+        const SYMBOL_ON_SCREEN_LAST_IDX  = SYMBOL_ON_SCREEN_START_IDX + SYMBOLS_ON_SCREEN_LENGTH - 1;
+        if(idxOnArray >= SYMBOL_ON_SCREEN_START_IDX && idxOnArray <= SYMBOL_ON_SCREEN_LAST_IDX) {
+            return true;
+        }
+
+        return false;
+    }
+
     private moveSymbolTweenMax(symbol_ : CSymbol) : void {
         const MOVE_GAP = 50;
         const DELAY = 0.04;
+        const MAX_Y_POS = 552;
         // 스핀 스탑할 때 텅하는 효과, 재귀 종료
 
             // 재귀 호출로 이미지 이동 및 변경
         TweenMax.to(symbol_.sprite, this.speed, { y: symbol_.sprite.y + Y_POS_GAP, onComplete: () => {
             
-            symbol_.idx++;
-            if(symbol_.idx >= this.symbolArray.length) {
-                symbol_.idx = 0;
+            symbol_.originalIdx++;
+            if(symbol_.originalIdx >= this.symbolArray.length) {
+                symbol_.originalIdx = 0;
             }
 
             if(this.isSpinning == false) {
-                TweenMax.to(symbol_.sprite, this.speed, { y: 552 - Y_POS_GAP * (symbol_.idx) + MOVE_GAP, onComplete: () => {
-                    if(symbol_.idx >= 1 && symbol_.idx <= 4) {
-                        let symbolIdentity = SYMBOL_MANAGER.getSymbolIdxByTexture(symbol_.sprite.texture);
-                        if(symbolIdentity != null) {
-                            this.stopSymbolIdxArray[4 - symbol_.idx] = symbolIdentity;
-                            this.stopCount++;
+                TweenMax.to(symbol_.sprite, this.speed, { y: MAX_Y_POS - Y_POS_GAP * (symbol_.originalIdx) + MOVE_GAP, onComplete: () => {
+
+                    if(this.isSymbolOnScreen(symbol_.originalIdx)) {
+                        let symbolIdentityIdx = SYMBOL_MANAGER.getSymbolIdxByTexture(symbol_.sprite.texture);
+                        if(symbolIdentityIdx != null) {
+                            this.symbolsOnScreenMap.set(SYMBOLS_ON_SCREEN_LENGTH - symbol_.originalIdx, symbolIdentityIdx);
                         }
                     }
                     TweenMax.to(symbol_.sprite, DELAY, { y: symbol_.sprite.y - MOVE_GAP, delay: DELAY})
@@ -147,7 +153,8 @@ export default class CReel {
     }
 
     private updateImg(target_ : CSymbol) {
-        if(target_.sprite.y >= MAX_Y_POS){
+        const Y_POS_OUT_OF_BOUNDARY = 660;
+        if(target_.sprite.y >= Y_POS_OUT_OF_BOUNDARY){
 
             this.symbolArray = this.symbolArray.filter(item => item !== target_);
             const lastImgIdx = this.symbolArray.length - 1;
@@ -228,7 +235,7 @@ export default class CReel {
     }
 
     public getCheckPossibility() : boolean {
-        if(this.stopCount == 4) {
+        if(this.symbolsOnScreenMap.size == 4) {
             return true;
         }
 
