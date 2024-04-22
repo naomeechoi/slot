@@ -1,60 +1,60 @@
 {
        "SymbolInfo":[
               {
-                     "index": 0,
+                     "identifyNum": 0,
+                     "path": "assets/0.png"
+              },
+              {
+                     "identifyNum": 1,
                      "path": "assets/1.png"
               },
               {
-                     "index": 1,
+                     "identifyNum": 2,
                      "path": "assets/2.png"
               },
               {
-                     "index": 2,
+                     "identifyNum": 3,
                      "path": "assets/3.png"
               },
               {
-                     "index": 3,
+                     "identifyNum": 4,
                      "path": "assets/4.png"
               },
               {
-                     "index": 4,
+                     "identifyNum": 5,
                      "path": "assets/5.png"
               },
               {
-                     "index": 5,
+                     "identifyNum": 6,
                      "path": "assets/6.png"
               },
               {
-                     "index": 6,
+                     "identifyNum": 7,
                      "path": "assets/7.png"
               },
               {
-                     "index": 7,
+                     "identifyNum": 8,
                      "path": "assets/8.png"
               },
               {
-                     "index": 8,
+                     "identifyNum": 9,
                      "path": "assets/9.png"
               },
               {
-                     "index": 9,
+                     "identifyNum": 10,
                      "path": "assets/10.png"
               },
               {
-                     "index": 10,
+                     "identifyNum": 11,
                      "path": "assets/11.png"
               },
               {
-                     "index": 11,
+                     "identifyNum": 12,
                      "path": "assets/12.png"
               },
               {
-                     "index": 12,
+                     "identifyNum": 13,
                      "path": "assets/13.png"
-              },
-              {
-                     "index": 13,
-                     "path": "assets/14.png"
               }
        ],
 
@@ -98,11 +98,23 @@
               },
 
               {
+                     "line": [15, 16, 17, 18, 19]
+              },
+
+              {
                      "line": [0, 6, 12, 8, 4]
               },
 
               {
+                     "line": [5, 11, 17, 13, 9]
+              },
+
+              {
                      "line": [10, 6, 2, 8, 14]
+              },
+
+              {
+                     "line": [15, 11, 7, 13, 19]
               },
 
               {
@@ -114,7 +126,15 @@
               },
 
               {
+                     "line": [10, 16, 17, 18, 14]
+              },
+
+              {
                      "line": [0, 1, 7, 13, 14]
+              },
+
+              {
+                     "line": [5, 6, 12, 18, 19]
               },
 
               {
@@ -122,11 +142,23 @@
               },
 
               {
+                     "line": [15, 16, 12, 8, 9]
+              },
+
+              {
                      "line": [5, 1, 7, 13, 9]
               },
 
               {
+                     "line": [10, 6, 12, 18, 14]
+              },
+
+              {
                      "line": [5, 11, 7, 3, 9]
+              },
+
+              {
+                     "line": [10, 16, 12, 8, 14]
               },
 
               {
@@ -138,11 +170,19 @@
               },
 
               {
+                     "line": [15, 11, 12, 13, 19]
+              },
+
+              {
                      "line": [0, 6, 2, 8, 4]
               },
 
               {
                      "line": [10, 6, 12, 8, 14]
+              },
+
+              {
+                     "line": [15, 11, 17, 13, 19]
               },
 
               {
@@ -154,7 +194,15 @@
               },
 
               {
+                     "line": [10, 11, 17, 13, 14]
+              },
+
+              {
                      "line": [0, 1, 12, 3, 4]
+              },
+
+              {
+                     "line": [5, 6, 17, 8, 9]
               },
 
               {
@@ -162,7 +210,15 @@
               },
 
               {
+                     "line": [15, 16, 7, 18, 19]
+              },
+
+              {
                      "line": [0, 11, 12, 13, 4]
+              },
+
+              {
+                     "line": [5, 16, 17, 18, 9]
               }
        ]
 }

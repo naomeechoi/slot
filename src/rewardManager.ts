@@ -1,26 +1,37 @@
 import { Graphics } from 'pixi.js';
 import { APP } from './singleton';
 
-const SHOW_LINE_TIME = 1000;
+const SHOW_LINE_TIME = 500;
 
+///////////////////////////////////////////////////////////////////////////////
 export default class CRewardManager {
-    payLines: Array<Array<number>>;
-    matchedLines: Array<Array<number>>;
-    lineGraphics: Array<Graphics>;
+    private static instance: CRewardManager | null = null;
+    private readonly payLines: number[][] = [];
+    private matchedLines: number[][] = [];
+    private lineGraphics: Graphics[] = [];
 
-    constructor(payLines_: Array<{line: Array<number>}>) {
-        this.payLines = [];
-        this.matchedLines = [];
-        this.lineGraphics = [];
-
-        this.payLines = new Array<Array<number>>;
+    private constructor(payLines_: {line: number[]}[]) {
         for(let i = 0; i < payLines_.length; i++){
             const curLine = payLines_[i];
             this.payLines.push(curLine.line);
         }
     }
 
-    public checkMatchingToPayLines(arrayReels_: number[]) {
+    ///////////////////////////////////////////////////////////////////////////
+    // 싱글톤 패턴, 하나의 인스턴스만 보장
+    ///////////////////////////////////////////////////////////////////////////
+    public static getInstance(payLines_: {line: number[]}[]): CRewardManager {
+        if(this.instance == null) {
+            this.instance = new CRewardManager(payLines_);
+        }
+
+        return this.instance;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // 페이라인(결과)을 체크하고 라인을 그린다.
+    ///////////////////////////////////////////////////////////////////////////
+    public checkPayLines(arrayReels_: number[]): void {
         for(const payLine of this.payLines) {
 
             let prevSymbolIdx = -1;
@@ -46,56 +57,74 @@ export default class CRewardManager {
         this.drawLines();
     }
     
-    private drawLines() {
+    ///////////////////////////////////////////////////////////////////////////
+    // 맞춰진 라인을 그린다.
+    ///////////////////////////////////////////////////////////////////////////
+    private drawLines(): void {
+        if(this.matchedLines.length == 0) {
+            return;
+        }
+        
         for(const matchLine of this.matchedLines) {
 
-            const realPath = new Graphics();
+            const lineGraphic = new Graphics();
             for(let i = 0; i < matchLine.length; i++) {
 
                 //const x = 208 + ()
                 const y = 120 + (Math.floor((matchLine[i])/5) * 108) + (108 / 2);
                 if(i == 0) {
-                    realPath.moveTo(208, y);
+                    lineGraphic.moveTo(208, y);
                 }
 
                 const x = 208 + ((matchLine[i])%5) * 128 + (128/2);
-                realPath.lineTo(x, y);
+                lineGraphic.lineTo(x, y);
 
                 if(i == matchLine.length - 1) {
-                    realPath.lineTo(840, y);
+                    lineGraphic.lineTo(840, y);
                 }
             }
 
-            realPath.zIndex = 2;
+            lineGraphic.zIndex = 2;
             const randomColor = Math.floor(Math.random() * 0xFFFFFF) + 1;
-            realPath.stroke({ width: 5, color: randomColor });
-            APP.stage.addChild(realPath);
-            this.lineGraphics.push(realPath);
+            lineGraphic.stroke({ width: 5, color: randomColor });
+            APP.stage.addChild(lineGraphic);
+            this.lineGraphics.push(lineGraphic);
         }
 
         setTimeout(() => {
             this.drawLinesOneByOne(0);
-        }, SHOW_LINE_TIME*2);
+        }, SHOW_LINE_TIME * 2);
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // 모든 라인이 보여져야 하는지 셋팅한다.
+    ///////////////////////////////////////////////////////////////////////////
+    private setAllLinesVisibility(bVisible: boolean): void {
+        for(const lineGraphic of this.lineGraphics) {
+            lineGraphic.visible = bVisible;
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // 라인을 하나씩 그린다.
+    ///////////////////////////////////////////////////////////////////////////
     private drawLinesOneByOne(nextVisibleLineIdx_: number) {
         if(this.lineGraphics.length == 0) {
             return;
         }
 
-        for(const line of this.lineGraphics) {
-            line.visible = false;
-        }
+        // 우선 다 안 보이게 처리한다.
+        this.setAllLinesVisibility(false);
 
+        // 보여질 라인에 대한 처리
         if(nextVisibleLineIdx_ >= this.lineGraphics.length) {
             nextVisibleLineIdx_ = -1;
 
-            for(const line of this.lineGraphics) {
-                line.visible = true;
-            }
+            // 라인이 다 보여져야 한다.
+            this.setAllLinesVisibility(true);
         }
         else {
-            if(this.lineGraphics[nextVisibleLineIdx_]) {
+            if(this.lineGraphics[nextVisibleLineIdx_] != null) {
                 this.lineGraphics[nextVisibleLineIdx_].visible = true;
             }
         }
@@ -106,12 +135,14 @@ export default class CRewardManager {
         }, SHOW_LINE_TIME);
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // 모든 라인을 없앤다.
+    ///////////////////////////////////////////////////////////////////////////
     public clearLines() {
         this.matchedLines = [];
         for(const lineGraphic of this.lineGraphics) {
             APP.stage.removeChild(lineGraphic);
         }
-
         this.lineGraphics = [];
     }
 }

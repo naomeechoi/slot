@@ -1,82 +1,105 @@
-import { Application, Assets, Sprite, Texture } from "pixi.js";
+import { Assets, Texture } from "pixi.js";
 
-class CSymbolImg {
-    private readonly index: number;
+///////////////////////////////////////////////////////////////////////////////
+class CSymbolInfo {
+    private readonly uniqueNum: number;
     private readonly imgPath: string;
     private texture!: any;
 
-    constructor(index_ : number, imgPath_ : string) {
-        this.index = index_;
+    constructor(uniqueNum_ : number, imgPath_ : string) {
+        this.uniqueNum = uniqueNum_;
         this.imgPath = imgPath_;
     }
 
-    public async loadTexture() {
+    public async loadTexture(): Promise<void> {
         this.texture = await Assets.loader.load(this.imgPath);
     }
 
-    public getIndex() : number {
-        return this.index;
+    public getUniqueNum(): number {
+        return this.uniqueNum;
     }
 
-    public getImgPath() : string {
+    public getImgPath(): string {
         return this.imgPath;
     }
 
-    public getTexture() : any {
+    public getTexture(): Texture {
         return this.texture;
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////
 export default class CSymbolManager {
-    symbols: Array<CSymbolImg>;
-    symbolSequence: Array<Array<number>>;
-    defaultSymbolsPos: Array<Array<{x: number, y: number}>>;
+    private static instance: CSymbolManager | null = null;
+    private readonly symbolInfo: CSymbolInfo[] = [];
+    private readonly symbolSequence: number[][] = [];
+    private readonly defaultSymbolsPos: {x: number, y: number}[][] = [];
 
-    constructor(symbolInfo_: Array<{index: number, path: string}>, sequenceInfo_: Array<{stop: Array<number>}>, defaultSymbolsPos_: Array<Array<{x: number, y: number}>>) {
-        this.symbols = new Array<CSymbolImg>;
+    constructor(symbolInfo_: {identifyNum: number, path: string}[], sequenceInfo_: {stop: Array<number>}[], defaultSymbolsPos_: {x: number, y: number}[][]) {
         for(const symbol of symbolInfo_){
-            const tempSymbol = new CSymbolImg(symbol.index, symbol.path);
-            this.symbols.push(tempSymbol);
+            const tempSymbolInfo = new CSymbolInfo(symbol.identifyNum, symbol.path);
+            this.symbolInfo.push(tempSymbolInfo);
         }
 
-        this.symbolSequence = new Array<Array<number>>;
         for(let i = 0; i < sequenceInfo_.length; i++){
             const sequence = sequenceInfo_[i];
             this.symbolSequence.push(sequence.stop);
         }
 
-        this.defaultSymbolsPos = new Array<Array<{x: number, y: number}>>;
         for(let i = 0; i < defaultSymbolsPos_.length; i++){
             const defaultSymbolPos = defaultSymbolsPos_[i];
             this.defaultSymbolsPos.push(defaultSymbolPos);
         }
     }
 
-    public async loadTextures() {
-        for(const symbol of this.symbols){
+    ///////////////////////////////////////////////////////////////////////////
+    // 싱글톤 패턴, 하나의 인스턴스만 보장
+    ///////////////////////////////////////////////////////////////////////////
+    public static getInstance(symbolInfo_: {identifyNum: number, path: string}[], sequenceInfo_: {stop: Array<number>}[], defaultSymbolsPos_: {x: number, y: number}[][]): CSymbolManager {
+        if(this.instance == null) {
+            this.instance = new CSymbolManager(symbolInfo_, sequenceInfo_, defaultSymbolsPos_);
+        }
+
+        return this.instance;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // 텍스쳐들을 로드한다.
+    ///////////////////////////////////////////////////////////////////////////////
+    public async loadTextures(): Promise<void> {
+        for(const symbol of this.symbolInfo){
             await symbol.loadTexture();
         }
     }
 
-    private getSymbolTexture(index_: number) : Texture | null{
-        const symbol = this.symbols[index_];
+    ///////////////////////////////////////////////////////////////////////////////
+    // 텍스쳐를 가져온다.
+    ///////////////////////////////////////////////////////////////////////////////
+    private getSymbolTexture(index_: number): Texture | null{
+        const symbol = this.symbolInfo[index_];
         if(symbol == null)
             return null;
 
         return symbol.getTexture();
     }
 
-    public getSymbolIdxByTexture(texture_: Texture): number | null {
-        for(const symbol of this.symbols) {
+    ///////////////////////////////////////////////////////////////////////////////
+    // 심볼 고유 번호를 가져온다.
+    ///////////////////////////////////////////////////////////////////////////////
+    public getSymbolUniqueNumByTexture(texture_: Texture): number | null {
+        for(const symbol of this.symbolInfo) {
             if(symbol.getTexture() == texture_) {
-                return symbol.getIndex();
+                return symbol.getUniqueNum();
             }
         }
 
         return null;
     }
 
-    public getSequenceLength(reelIdx_: number) {
+    ///////////////////////////////////////////////////////////////////////////////
+    // 심볼들이 보여져야 하는 순서를 담고있는 시퀀스의 길이를 가져온다. 
+    ///////////////////////////////////////////////////////////////////////////////
+    public getSequenceLength(reelIdx_: number): number {
         const curReelSequenceArray = this.symbolSequence[reelIdx_];
         if(curReelSequenceArray == null){
             return 0;
@@ -85,19 +108,28 @@ export default class CSymbolManager {
         return curReelSequenceArray.length;
     }
 
-     // 심볼 시퀀스에서 심볼 텍스쳐 가져오기 lastSymbol: {idx: number};
-    public getSymbolTextureOnSequence(reelIdx_: number, sequencePointer_: number) : Texture | null{
-        const curReelSequenceArray = this.symbolSequence[reelIdx_];
-        if(curReelSequenceArray == null){
+    ///////////////////////////////////////////////////////////////////////////////
+    // 심볼 시퀀스 위치로 텍스쳐 가져오기
+    ///////////////////////////////////////////////////////////////////////////////
+    public getSymbolTextureBySequenceLocation(reelIdx_: number, sequenceLocation_: number): Texture | null{
+        const sequenceArrayOnCurReel = this.symbolSequence[reelIdx_];
+        if(sequenceArrayOnCurReel == null){
             return null;
         }
-        const arrayLength = curReelSequenceArray.length;
-        if(sequencePointer_ >= arrayLength){
-            sequencePointer_ = 0;
+        const arrayLength = sequenceArrayOnCurReel.length;
+        if(sequenceLocation_ >= arrayLength){
+            sequenceLocation_ = 0;
         }
 
-        const imgIdx = curReelSequenceArray[sequencePointer_];
+        const symbolIdentifyNum = sequenceArrayOnCurReel[sequenceLocation_];
 
-        return this.getSymbolTexture(imgIdx);
+        return this.getSymbolTexture(symbolIdentifyNum);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // 심볼 스크린상 기본 위치
+    ///////////////////////////////////////////////////////////////////////////////
+    public getDefaultSymbolsPos(): {x: number, y: number}[][] {
+        return this.defaultSymbolsPos;
     }
 }

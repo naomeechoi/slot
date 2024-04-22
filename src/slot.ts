@@ -84,7 +84,7 @@ export default class CSlot {
                 const ROWS = 4;
                 for(let i = 0; i < ROWS; i++) {
                     for(let j = 0; j < this.observerReels.length; j++) {
-                        const symbolIdentifyIdx = this.observerReels[j].symbolsOnScreenMap.get(i);
+                        const symbolIdentifyIdx = this.observerReels[j].getSymbolsOnScreenMap().get(i);
                         if(symbolIdentifyIdx != null) {
                             symbolIdentitiesOnSlot.push(symbolIdentifyIdx);
                         } 
@@ -92,7 +92,7 @@ export default class CSlot {
                 }
 
                 // 리워드 메니저가 계산하고 라인을 그리도록 정보를 넘겨준다.
-                REWARD_MANAGER.checkMatchingToPayLines(symbolIdentitiesOnSlot);
+                REWARD_MANAGER.checkPayLines(symbolIdentitiesOnSlot);
 
                 // 시작하지 못하도록 잠시 막아둔다.
                 setTimeout(() => {

@@ -13,8 +13,8 @@ export const APP = CSingleton.app;
 
 const DATA_STR = JSON.stringify(json);
 const JSON_OBJECT = JSON.parse(DATA_STR);
-CSingleton.symbolManager = new CSymbolManager(JSON_OBJECT["SymbolInfo"], JSON_OBJECT["Strip"], JSON_OBJECT["SymbolPosition"]);
-CSingleton.rewardManager = new CRewardManager(JSON_OBJECT["PayLines"]);
+CSingleton.symbolManager = CSymbolManager.getInstance(JSON_OBJECT["SymbolInfo"], JSON_OBJECT["Strip"], JSON_OBJECT["SymbolPosition"]);
+CSingleton.rewardManager = CRewardManager.getInstance(JSON_OBJECT["PayLines"]);
 
 export const SYMBOL_MANAGER = CSingleton.symbolManager;
 export const REWARD_MANAGER = CSingleton.rewardManager;

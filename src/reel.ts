@@ -26,28 +26,23 @@ class CSymbol {
 
 ///////////////////////////////////////////////////////////////////////////////
 export default class CReel {
-    reelIdx: number;
-    bSpinning: boolean = false;
-
-    symbolPool: CSymbol[] = [];
-    sequenceLocation: number;
-
-    spinningSpeed: number = MIN_SPINNING_SPEED;
-    spinningSpeedController: number = EXPONENTIAL_UP;
-
-    reelStopLocation: number = WAIT_FOR_STOP_SIGN;
-    nextAdjacentReel: CReel | null = null;
-
-    bPrevReelPermission: boolean = false;
-    bSelfPermission: boolean = false;
-
-    symbolsOnScreenMap: Map<number, number> = new Map;
+    private reelIdx: number;
+    private bSpinning: boolean = false;
+    private symbolPool: CSymbol[] = [];
+    private sequenceLocation: number;
+    private spinningSpeed: number = MIN_SPINNING_SPEED;
+    private spinningSpeedController: number = EXPONENTIAL_UP;
+    private reelStopLocation: number = WAIT_FOR_STOP_SIGN;
+    private nextAdjacentReel: CReel | null = null;
+    private bPrevReelPermission: boolean = false;
+    private bSelfPermission: boolean = false;
+    private symbolsOnScreenMap: Map<number, number> = new Map;
     
     constructor(reelIdx_: number) {
         this.reelIdx = reelIdx_;
 
         // 심볼들의 초기 스크린상 위치를 받아서 셋팅해준다.
-        const symbolsPosOnReel: Array<{x: number, y: number}> = SYMBOL_MANAGER.defaultSymbolsPos[this.reelIdx];
+        const symbolsPosOnReel: Array<{x: number, y: number}> = SYMBOL_MANAGER.getDefaultSymbolsPos()[this.reelIdx];
         if(symbolsPosOnReel != null){
             for(let i = 0; i < symbolsPosOnReel.length; i++){
                 const tempSymbolImg = new Sprite();
@@ -95,8 +90,11 @@ export default class CReel {
     public setSymbolsTexture() : void {
         for(let i = 0; i < this.symbolPool.length; i++){
             const symbol = this.symbolPool[i];
-            symbol.sprite.texture = SYMBOL_MANAGER.getSymbolTextureOnSequence(this.reelIdx, i)!;
-            APP.stage.addChild(symbol.sprite);
+            const tempTexture = SYMBOL_MANAGER.getSymbolTextureBySequenceLocation(this.reelIdx, i);
+            if(tempTexture != null) {
+                symbol.sprite.texture = tempTexture;
+                APP.stage.addChild(symbol.sprite);
+            }
         }
     }
 
@@ -163,9 +161,9 @@ export default class CReel {
                     // 스크린에 보여줘야할 심볼이면 symbolsOnScreenMap에 담아둔다.
                     // symbolsOnScreenMap은 페이라인을 판단하는데 쓰인다.
                     if(this.isSymbolOnScreen(symbol_.originalIdx)) {
-                        let symbolIdentityIdx = SYMBOL_MANAGER.getSymbolIdxByTexture(symbol_.sprite.texture);
-                        if(symbolIdentityIdx != null) {
-                            this.symbolsOnScreenMap.set(SYMBOLS_ON_SCREEN_LENGTH - symbol_.originalIdx, symbolIdentityIdx);
+                        let symbolUniqueNum = SYMBOL_MANAGER.getSymbolUniqueNumByTexture(symbol_.sprite.texture);
+                        if(symbolUniqueNum != null) {
+                            this.symbolsOnScreenMap.set(SYMBOLS_ON_SCREEN_LENGTH - symbol_.originalIdx, symbolUniqueNum);
                         }
                     }
 
@@ -207,7 +205,7 @@ export default class CReel {
         }
 
         // 새로운 텍스쳐로 바꿔준다.
-        target_.sprite.texture = SYMBOL_MANAGER.getSymbolTextureOnSequence(this.reelIdx, this.sequenceLocation)!;
+        target_.sprite.texture = SYMBOL_MANAGER.getSymbolTextureBySequenceLocation(this.reelIdx, this.sequenceLocation)!;
         // 다시 풀에 넣는다.
         this.symbolPool.push(target_); 
     }
@@ -297,7 +295,7 @@ export default class CReel {
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // 스크린ㅇ네 보이는 심볼들이 모두 멈춰 제자리를 찾았다면 symbolsOnScreenMap의 사이즈가 4가 된다.
+    // 스크린에 보이는 심볼들이 모두 멈춰 제자리를 찾았다면 symbolsOnScreenMap의 사이즈가 4가 된다.
     ///////////////////////////////////////////////////////////////////////////
     public getCheckPossibility(): boolean {
         if(this.symbolsOnScreenMap.size == SYMBOLS_ON_SCREEN_LENGTH) {
@@ -305,5 +303,12 @@ export default class CReel {
         }
 
         return false;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // 스크린에 보이는 심볼 맵을 반환한다.
+    ///////////////////////////////////////////////////////////////////////////
+    public getSymbolsOnScreenMap(): Map<number, number> {
+        return this.symbolsOnScreenMap;
     }
 }
