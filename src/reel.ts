@@ -87,7 +87,7 @@ export default class CReel {
     ///////////////////////////////////////////////////////////////////////////
     // CSlot에서 심볼들의 texture를 셋팅해준다.
     ///////////////////////////////////////////////////////////////////////////
-    public setSymbolsTexture() : void {
+    public setSymbolsTexture(): void {
         for(let i = 0; i < this.symbolPool.length; i++){
             const symbol = this.symbolPool[i];
             const tempTexture = SYMBOL_MANAGER.getSymbolTextureBySequenceLocation(this.reelIdx, i);
@@ -101,7 +101,7 @@ export default class CReel {
     ///////////////////////////////////////////////////////////////////////////
     // CSlot에서 다음에 오는 릴을 셋팅해준다.
     ///////////////////////////////////////////////////////////////////////////
-    public setNextAdjacentReel(nextReel_: CReel) : void {
+    public setNextAdjacentReel(nextReel_: CReel): void {
         this.nextAdjacentReel = nextReel_;
     }
 

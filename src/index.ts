@@ -1,6 +1,6 @@
 import CSlot from "./slot";
 
-const SLOT = new CSlot();
+const SLOT = CSlot.getInstance();
 const FPS : number = 1000 / 60; 
 
 main();

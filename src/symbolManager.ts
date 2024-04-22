@@ -1,12 +1,14 @@
 import { Assets, Texture } from "pixi.js";
 
 ///////////////////////////////////////////////////////////////////////////////
+// 총 14개의 심볼 정보들
+///////////////////////////////////////////////////////////////////////////////
 class CSymbolInfo {
     private readonly uniqueNum: number;
     private readonly imgPath: string;
     private texture!: any;
 
-    constructor(uniqueNum_ : number, imgPath_ : string) {
+    constructor(uniqueNum_: number, imgPath_: string) {
         this.uniqueNum = uniqueNum_;
         this.imgPath = imgPath_;
     }
@@ -75,7 +77,7 @@ export default class CSymbolManager {
     ///////////////////////////////////////////////////////////////////////////////
     // 텍스쳐를 가져온다.
     ///////////////////////////////////////////////////////////////////////////////
-    private getSymbolTexture(index_: number): Texture | null{
+    private getSymbolTexture(index_: number): Texture | null {
         const symbol = this.symbolInfo[index_];
         if(symbol == null)
             return null;
@@ -111,7 +113,7 @@ export default class CSymbolManager {
     ///////////////////////////////////////////////////////////////////////////////
     // 심볼 시퀀스 위치로 텍스쳐 가져오기
     ///////////////////////////////////////////////////////////////////////////////
-    public getSymbolTextureBySequenceLocation(reelIdx_: number, sequenceLocation_: number): Texture | null{
+    public getSymbolTextureBySequenceLocation(reelIdx_: number, sequenceLocation_: number): Texture | null {
         const sequenceArrayOnCurReel = this.symbolSequence[reelIdx_];
         if(sequenceArrayOnCurReel == null){
             return null;

@@ -99,16 +99,16 @@ export default class CRewardManager {
     ///////////////////////////////////////////////////////////////////////////
     // 모든 라인이 보여져야 하는지 셋팅한다.
     ///////////////////////////////////////////////////////////////////////////
-    private setAllLinesVisibility(bVisible: boolean): void {
+    private setAllLinesVisibility(bVisible_: boolean): void {
         for(const lineGraphic of this.lineGraphics) {
-            lineGraphic.visible = bVisible;
+            lineGraphic.visible = bVisible_;
         }
     }
 
     ///////////////////////////////////////////////////////////////////////////
     // 라인을 하나씩 그린다.
     ///////////////////////////////////////////////////////////////////////////
-    private drawLinesOneByOne(nextVisibleLineIdx_: number) {
+    private drawLinesOneByOne(nextVisibleLineIdx_: number): void {
         if(this.lineGraphics.length == 0) {
             return;
         }
@@ -138,7 +138,7 @@ export default class CRewardManager {
     ///////////////////////////////////////////////////////////////////////////
     // 모든 라인을 없앤다.
     ///////////////////////////////////////////////////////////////////////////
-    public clearLines() {
+    public clearLines(): void {
         this.matchedLines = [];
         for(const lineGraphic of this.lineGraphics) {
             APP.stage.removeChild(lineGraphic);

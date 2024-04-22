@@ -7,11 +7,23 @@ const SPIN_TIME = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 export default class CSlot {
+    private static instance: CSlot | null = null;
     private observerReels: CReel[] = [];
     private bStartToCheckPayLines: boolean = false;
     private bCanStart: boolean = true;
 
-    constructor(){
+    private constructor(){
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // 싱글톤 패턴, 하나의 인스턴스만 보장
+    ///////////////////////////////////////////////////////////////////////////
+    public static getInstance(): CSlot {
+        if(this.instance == null) {
+            this.instance = new CSlot();
+        }
+
+        return this.instance;
     }
 
     ///////////////////////////////////////////////////////////////////////////
