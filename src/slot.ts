@@ -1,19 +1,23 @@
-import { Application, Assets, Sprite } from "pixi.js";
+import { Assets, Sprite } from "pixi.js";
 import { APP, SYMBOL_MANAGER, REWARD_MANAGER } from "./singleton"
 import CReel from "./reel"
 const REEL_COUNT = 5;
-const SPIN_TERM = 0;
+const SPIN_TERM = 300;
 const SPIN_TIME = 0;
 
+///////////////////////////////////////////////////////////////////////////////
 export default class CSlot {
     private observerReels: CReel[] = [];
-    private isPayLinesCheck: boolean = false;
+    private bStartToCheckPayLines: boolean = false;
     private bCanStart: boolean = true;
 
     constructor(){
     }
 
-    public async setBackground() {
+    ///////////////////////////////////////////////////////////////////////////
+    // 백그라운드 셋팅
+    ///////////////////////////////////////////////////////////////////////////
+    public async setBackground(): Promise<void> {
         // Initialize the application
         await APP.init({ width:960, height: 720});
 
@@ -36,56 +40,61 @@ export default class CSlot {
         APP.stage.addChild(background);
     }
 
-    // 릴 하나가 스핀이 끝났을 때 다음 릴에게 종료 가능 사인을 보내주기 위해 추가
-    private setNextReel() : void {
-        for(let i = 0; i < REEL_COUNT - 1; i++){
-            this.observerReels[i].setNextReel(this.observerReels[i+1]);
-        }
-    }
-
-    public setReel() : void {
+    ///////////////////////////////////////////////////////////////////////////
+    // 릴 기본 셋팅
+    ///////////////////////////////////////////////////////////////////////////
+    public setReelDefault(): void {
         for(let i = 0; i < REEL_COUNT; i++){
             const tempReel = new CReel(i);
-            tempReel.setReelImg();
+            tempReel.setSymbolsTexture();
             this.observerReels.push(tempReel);
         }
 
-        this.setNextReel();
+        // 릴에게 다음 릴들을 참조할 수 있게 한다.
+        for(let i = 0; i < REEL_COUNT - 1; i++){
+            this.observerReels[i].setNextAdjacentReel(this.observerReels[i+1]);
+        }
     }
 
-    public update() : void {
+    ///////////////////////////////////////////////////////////////////////////
+    // 매 프레임마다 업데이트 된다.
+    ///////////////////////////////////////////////////////////////////////////
+    public update(): void {
         for(const reel of this.observerReels){
             reel.update();
         }
 
-        if(this.isPayLinesCheck) {
-            let checkCount = 0;
+        // 일정 시간 후 페이라인 체크를 시작한다.
+        if(this.bStartToCheckPayLines) {
+
+            // 릴들이 멈췄는지 체크한다.
+            let stoppedReelCount: number = 0;
             for(const reel of this.observerReels){
                 if(reel.getCheckPossibility()) {
-                    checkCount++;
+                    stoppedReelCount++;
                 }
             }
 
-            if(checkCount == REEL_COUNT) {
-                this.isPayLinesCheck = false;
+            // 모든 릴이 멈췄다.
+            if(stoppedReelCount == REEL_COUNT) {
+                this.bStartToCheckPayLines = false;
 
-                let symbolsIdxOnSlot: number[] = [];
-
-                for(let i = 0; i < 4; i++) {
+                // 화면에 나와있는 모든 심볼들의 아이덴티티를 담는다.
+                let symbolIdentitiesOnSlot: number[] = [];
+                const ROWS = 4;
+                for(let i = 0; i < ROWS; i++) {
                     for(let j = 0; j < this.observerReels.length; j++) {
                         const symbolIdentifyIdx = this.observerReels[j].symbolsOnScreenMap.get(i);
                         if(symbolIdentifyIdx != null) {
-                            symbolsIdxOnSlot.push(symbolIdentifyIdx);
+                            symbolIdentitiesOnSlot.push(symbolIdentifyIdx);
                         } 
                     }
                 }
-                
-                for(let j = 0; j < this.observerReels.length; j++) {
-                    this.observerReels[j].symbolsOnScreenMap.clear();
-                }
 
-                REWARD_MANAGER.checkMatchingToPayLines(symbolsIdxOnSlot);
+                // 리워드 메니저가 계산하고 라인을 그리도록 정보를 넘겨준다.
+                REWARD_MANAGER.checkMatchingToPayLines(symbolIdentitiesOnSlot);
 
+                // 시작하지 못하도록 잠시 막아둔다.
                 setTimeout(() => {
                     this.bCanStart = true;
                 }, 1000);
@@ -94,49 +103,69 @@ export default class CSlot {
         }
     }
 
-    private startSpinning() : void {
-        if(this.bCanStart == false)
+    ///////////////////////////////////////////////////////////////////////////
+    // 게임을 시작한다.
+    ///////////////////////////////////////////////////////////////////////////
+    private startGame(): void {
+        if(this.bCanStart == false) {
             return;
+        }
         
         this.bCanStart = false;
         for(let i = 0; i < REEL_COUNT; i++){
             setTimeout(() => {
                 this.observerReels[i].start();
-                setTimeout(() => {
-                    this.receiveMessageFromServer(0);
-                    this.isPayLinesCheck = true;
-                }, SPIN_TIME);
             }, i * SPIN_TERM);
         }
 
+        // SPIN_TIME이 끝난 후, 서버로 메시지 받았다고 가정한다.
+        // SPIN_TIME이 끝난 후, 페이라인 체크를 시작한다.
+        setTimeout(() => {
+            this.receiveMessageFromServer(0);
+            this.bStartToCheckPayLines = true;
+        }, SPIN_TIME);
+
+        // 페이라인 그려진게 있다면 지운다.
         REWARD_MANAGER.clearLines();
     }
 
-    private randomizeStopNumber() : Array<number> {
-        let tempReelStopNumbers : Array<number> = [];
+    ///////////////////////////////////////////////////////////////////////////
+    // 릴이 멈춰야할 위치를 랜덤으로 정한다.
+    ///////////////////////////////////////////////////////////////////////////
+    private randomizeStopNumber(): number[] {
+        let reelStopNumbers: number[] = [];
         for(let i = 0; i < REEL_COUNT; i++){
             const reelLength = SYMBOL_MANAGER.getSequenceLength(i);
             const randomReelNum = Math.floor(Math.random() * reelLength);
-            tempReelStopNumbers.push(randomReelNum);
+            reelStopNumbers.push(randomReelNum);
         }
 
-        return tempReelStopNumbers;
+        return reelStopNumbers;
     }
 
-    private stopSpinning() : void {
+    ///////////////////////////////////////////////////////////////////////////
+    // 릴들을 정지 시킨다.
+    ///////////////////////////////////////////////////////////////////////////
+    private stopSpinning(): void {
         const reelStopNumbers = this.randomizeStopNumber(); 
         for(let i = 0; i < REEL_COUNT; i++){
             setTimeout(() => {
-                this.observerReels[i].readyToStop(reelStopNumbers[i]);
+                this.observerReels[i].SetReelStopLocation(reelStopNumbers[i]);
             }, i * SPIN_TERM);
         }
     }
 
-    public mouseEventFromClient(event_: MouseEvent) : void {
-        this.startSpinning();
+    ///////////////////////////////////////////////////////////////////////////
+    // 클릭 이벤트를 받아온다.
+    ///////////////////////////////////////////////////////////////////////////
+    public mouseEventFromClient(event_: MouseEvent): void {
+        this.startGame();
     }
 
-    public receiveMessageFromServer(message_: number) : boolean {
+    ///////////////////////////////////////////////////////////////////////////
+    // 서버로부터 메시지를 받는다.
+    ///////////////////////////////////////////////////////////////////////////
+    public receiveMessageFromServer(message_: number): boolean {
         switch(message_) {
             case 0: {
                 this.stopSpinning();
@@ -149,7 +178,10 @@ export default class CSlot {
         return true;
     }
 
-    public SendMessageToServer() : void {
+    ///////////////////////////////////////////////////////////////////////////
+    // 서버로 메시지를 보낸다.
+    ///////////////////////////////////////////////////////////////////////////
+    public SendMessageToServer(): void {
 
     }
 }
