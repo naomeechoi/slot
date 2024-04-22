@@ -1,5 +1,5 @@
-import { Graphics } from 'pixi.js';
-import { APP } from './singleton';
+import { Sprite, Graphics } from 'pixi.js';
+import { APP, SYMBOL_MANAGER } from './singleton';
 
 const SHOW_LINE_TIME = 500;
 
@@ -31,18 +31,23 @@ export default class CRewardManager {
     ///////////////////////////////////////////////////////////////////////////
     // 페이라인(결과)을 체크하고 라인을 그린다.
     ///////////////////////////////////////////////////////////////////////////
-    public checkPayLines(arrayReels_: number[]): void {
+    public checkPayLines(symbolSpritesArray_: Sprite[]): void {
         for(const payLine of this.payLines) {
 
             let prevSymbolIdx = -1;
             let consecutiveCount = 0;
             for(const lineElement of payLine) {
+                let symbolUniqueNum = SYMBOL_MANAGER.getSymbolUniqueNumByTexture(symbolSpritesArray_[lineElement].texture);
+                if(symbolUniqueNum == null) {
+                    continue;     
+                }
+
                 if(prevSymbolIdx == -1) {
-                    prevSymbolIdx = arrayReels_[lineElement];
+                    prevSymbolIdx = symbolUniqueNum;
                     continue;
                 }
 
-                if(prevSymbolIdx == arrayReels_[lineElement]) {
+                if(prevSymbolIdx == symbolUniqueNum) {
                     consecutiveCount++;
                 }
                 else {

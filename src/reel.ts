@@ -36,7 +36,7 @@ export default class CReel {
     private nextAdjacentReel: CReel | null = null;
     private bPrevReelPermission: boolean = false;
     private bSelfPermission: boolean = false;
-    private symbolsOnScreenMap: Map<number, number> = new Map;
+    private symbolsOnScreenMap: Map<number, Sprite> = new Map;
     
     constructor(reelIdx_: number) {
         this.reelIdx = reelIdx_;
@@ -161,10 +161,7 @@ export default class CReel {
                     // 스크린에 보여줘야할 심볼이면 symbolsOnScreenMap에 담아둔다.
                     // symbolsOnScreenMap은 페이라인을 판단하는데 쓰인다.
                     if(this.isSymbolOnScreen(symbol_.originalIdx)) {
-                        let symbolUniqueNum = SYMBOL_MANAGER.getSymbolUniqueNumByTexture(symbol_.sprite.texture);
-                        if(symbolUniqueNum != null) {
-                            this.symbolsOnScreenMap.set(SYMBOLS_ON_SCREEN_LENGTH - symbol_.originalIdx, symbolUniqueNum);
-                        }
+                        this.symbolsOnScreenMap.set(SYMBOLS_ON_SCREEN_LENGTH - symbol_.originalIdx, symbol_.sprite);
                     }
 
                     // 다시 제자리로 올라온다.
@@ -308,7 +305,7 @@ export default class CReel {
     ///////////////////////////////////////////////////////////////////////////
     // 스크린에 보이는 심볼 맵을 반환한다.
     ///////////////////////////////////////////////////////////////////////////
-    public getSymbolsOnScreenMap(): Map<number, number> {
+    public getSymbolsOnScreenMap(): Map<number, Sprite> {
         return this.symbolsOnScreenMap;
     }
 }
