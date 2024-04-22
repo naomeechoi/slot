@@ -111,7 +111,7 @@ export default class CSlot {
         let tempReelStopNumbers : Array<number> = [];
         for(let i = 0; i < REEL_COUNT; i++){
             const reelLength = SYMBOL_MANAGER.getSequenceLength(i);
-            const randomReelNum = Math.floor(Math.random() * reelLength) + 1;
+            const randomReelNum = Math.floor(Math.random() * reelLength);
             tempReelStopNumbers.push(randomReelNum);
         }
 

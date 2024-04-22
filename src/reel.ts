@@ -31,7 +31,7 @@ export default class CReel {
     isSpinning: boolean;
     speed!: number;
     speedController!: number;
-    stopPointer!: number;
+    stopPointer: number;
     nextReel: CReel | null;
     isStopPermissionFromPrevReel!: boolean;
     isStopPermissionFromSelf!: boolean;
@@ -66,6 +66,7 @@ export default class CReel {
         //1, 2, 3, 4 번이 화면에 보이는 슬롯
 
         this.stopCount = 0;
+        this.stopPointer = WAIT_FOR_STOP_SIGN;
     }
 
     private defaultSetting() : void {
@@ -73,7 +74,6 @@ export default class CReel {
         this.speedController = EXPONENTIAL_SPEED_UP;
 
         this.isSpinning = false;
-        this.stopPointer = WAIT_FOR_STOP_SIGN;
 
         if(this.reelIdx == 0) {
             this.isStopPermissionFromPrevReel = true;
@@ -100,6 +100,7 @@ export default class CReel {
     public start() : void {
         this.isSpinning = true;
         this.stopCount = 0;
+        this.stopPointer = WAIT_FOR_STOP_SIGN;
         this.spin();
     }
 
@@ -107,7 +108,6 @@ export default class CReel {
 
         const clonedArray = [...this.symbolArray];
         for (const symbol of clonedArray) {
-            //console.log(clonedArray.length);
             this.moveSymbolTweenMax(symbol);
         }
     }
@@ -148,13 +148,9 @@ export default class CReel {
 
     private updateImg(target_ : CSymbol) {
         if(target_.sprite.y >= MAX_Y_POS){
-           // APP.stage.removeChild(target_.sprite);
-            this.symbolArray = this.symbolArray.filter(item => item !== target_);
 
-            // 새로운 심볼 이미지 뒤에 붙여줌
-           // const newSymbolImg = new Sprite();
+            this.symbolArray = this.symbolArray.filter(item => item !== target_);
             const lastImgIdx = this.symbolArray.length - 1;
-           // newSymbolImg.x = this.symbolArray[lastImgIdx].sprite.x;
 
             // 제일 마지막 심볼 위 y값
             target_.sprite.y = this.symbolArray[lastImgIdx].sprite.y - Y_POS_GAP;
@@ -163,11 +159,9 @@ export default class CReel {
             if(this.sequencePointer >= SYMBOL_MANAGER.getSequenceLength(this.reelIdx)){
                 this.sequencePointer = 0;
             }
+
             target_.sprite.texture = SYMBOL_MANAGER.getSymbolTextureOnSequence(this.reelIdx, this.sequencePointer)!;
             this.symbolArray.push(target_);
-
-            //console.log(prv + "aa"  + target_.idx);
-            //APP.stage.addChild(newSymbolImg);
         }
     }
 
