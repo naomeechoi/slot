@@ -1,9 +1,10 @@
-import { Assets, Sprite } from "pixi.js";
+import { Assets, Sprite, TextStyle, Text } from "pixi.js";
 import { APP, SYMBOL_MANAGER, REWARD_MANAGER } from "./singleton"
 import CReel from "./reel"
 const REEL_COUNT = 5;
 const SPIN_TERM = 300;
 const SPIN_TIME = 0;
+const TOTAL_BET = 250000;
 
 ///////////////////////////////////////////////////////////////////////////////
 export default class CSlot {
@@ -11,6 +12,7 @@ export default class CSlot {
     private observerReels: CReel[] = [];
     private bStartToCheckPayLines: boolean = false;
     private bCanStart: boolean = true;
+    private totalBetText!: Text;
 
     private constructor(){
     }
@@ -50,6 +52,15 @@ export default class CSlot {
         background.zIndex = 1;
 
         APP.stage.addChild(background);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // ui 셋팅
+    ///////////////////////////////////////////////////////////////////////////
+    public setUI(): void {
+        const style = new TextStyle({fontSize: 25, fill: '#ffffff'});
+        this.totalBetText = new Text({x: 165, y:617, zIndex:2, text: TOTAL_BET, style});
+        APP.stage.addChild(this.totalBetText);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -104,7 +115,7 @@ export default class CSlot {
                 }
 
                 // 리워드 메니저가 계산하고 라인을 그리도록 정보를 넘겨준다.
-                REWARD_MANAGER.checkPayLines(symbolSpritesOnSlot);
+                REWARD_MANAGER.checkResult(TOTAL_BET, symbolSpritesOnSlot);
 
                 // 시작하지 못하도록 잠시 막아둔다.
                 setTimeout(() => {

@@ -1,4 +1,5 @@
-import { Sprite, Graphics } from 'pixi.js';
+import { Sprite, Graphics, TextStyle, Text } from 'pixi.js';
+import { TweenMax } from 'gsap/TweenMax';
 import { APP, SYMBOL_MANAGER } from './singleton';
 
 const SHOW_LINE_TIME = 800;
@@ -12,13 +13,22 @@ export default class CRewardManager {
     private matchedSprites: Sprite[][] = [];
     private lineGraphics: Graphics[] = [];
     private rectGraphics: Graphics[] = [];
+    private lineWinTexts: Text[] = [];
+    private totalWinText: Text;
     private curVisibleLine: number = WHOLE_LINES_VISIBLE;
+    private oneLineCredit: number = 0;
+    private totalWin: number = 0;
 
     private constructor(payLines_: {line: number[]}[]) {
         for(let i = 0; i < payLines_.length; i++){
             const curLine = payLines_[i];
             this.payLines.push(curLine.line);
         }
+
+        const style = new TextStyle({fontSize: 30, fill: '#ffffff'});
+        this.totalWinText = new Text({x: 400, y:618, zIndex:2, text: 0, style});
+        this.totalWinText.visible = false;
+        APP.stage.addChild(this.totalWinText);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -35,9 +45,11 @@ export default class CRewardManager {
     ///////////////////////////////////////////////////////////////////////////
     // 페이라인(결과)을 체크하고 라인을 그린다.
     ///////////////////////////////////////////////////////////////////////////
-    public checkPayLines(symbolSpritesArray_: Sprite[]): void {
+    public checkResult(totalBet_: number, symbolSpritesArray_: Sprite[]): void {
         const PREV_SYMBOL_NOT_DECIDED = -1;
         const ZERO_CONSECUTIVE = 0;
+
+        this.oneLineCredit = totalBet_ / 125;
 
         for(const payLine of this.payLines) {
             let prevSymbolUniqueNum: number = PREV_SYMBOL_NOT_DECIDED;
@@ -126,7 +138,24 @@ export default class CRewardManager {
             rectGraphic.visible = false;
             APP.stage.addChild(rectGraphic);
             this.rectGraphics.push(rectGraphic);
+
+            // 라인 윈 페이 텍스트 그리기
+            let style = new TextStyle({fontSize: 12, fill: RANDOM_COLOR});
+            let oneLineWinPay = this.oneLineCredit * 100;
+            let textContent: string = "Line Win Pays: " + oneLineWinPay;
+            let tempText = new Text({x: 150, y:555, zIndex:Z_FRONT, text: textContent, style});
+            tempText.visible = false;
+            APP.stage.addChild(tempText);
+            this.lineWinTexts.push(tempText);
+
+            this.totalWin += oneLineWinPay;
         }
+
+        // 총합 윈 텍스트
+        this.totalWinText.visible = true;
+        TweenMax.to(this.totalWinText, 1, {text: this.totalWin, onUpdate: () => {
+            this.totalWinText.text = parseInt(this.totalWinText.text);
+        }})
 
         setTimeout(() => {
             this.showLinesAndRectsOneByOne(0);
@@ -163,6 +192,15 @@ export default class CRewardManager {
     }
 
     ///////////////////////////////////////////////////////////////////////////
+    // 모든 라인 윈 페이 visible 설정
+    ///////////////////////////////////////////////////////////////////////////
+    private setAllLineWinPaysVisible(bVisible_: boolean): void {
+        for(const lineWinText of this.lineWinTexts) {
+            lineWinText.visible = bVisible_;
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
     // 라인을 하나씩 그린다.
     ///////////////////////////////////////////////////////////////////////////
     private showLinesAndRectsOneByOne(visibleLineIdx_: number): void {
@@ -173,6 +211,7 @@ export default class CRewardManager {
         // 우선 다 안 보이게 처리한다.
         this.setAllLinesVisible(false);
         this.setAllSymbolBorderVisible(false);
+        this.setAllLineWinPaysVisible(false);
 
         // 보여질 라인에 대한 처리
         if(visibleLineIdx_ >= this.lineGraphics.length) {
@@ -192,6 +231,7 @@ export default class CRewardManager {
                 this.blinkSymbols(blinkAtt);
 
                 this.rectGraphics[visibleLineIdx_].visible = true;
+                this.lineWinTexts[visibleLineIdx_].visible = true;
             }
         }
 
@@ -237,11 +277,19 @@ export default class CRewardManager {
         }
         this.lineGraphics = [];
 
-        //this.setAllSymbolBoundaryVisible(false);
         for(const rectGraphic of this.rectGraphics) {
             APP.stage.removeChild(rectGraphic);
         }
         this.rectGraphics = [];
+
+        for(const lineWinText of this.lineWinTexts) {
+            APP.stage.removeChild(lineWinText);
+        }
+        this.lineWinTexts = [];
+
         this.curVisibleLine = WHOLE_LINES_VISIBLE;
+
+        this.totalWinText.visible = false;
+        this.totalWinText.text = 0;
     }
 }

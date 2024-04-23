@@ -7,6 +7,7 @@ main();
 
 function main() {
     SLOT.setBackground();
+    SLOT.setUI();
     SLOT.setReelDefault();
     document.addEventListener("click", detectMouseEvent);
     setInterval(update, FPS);
