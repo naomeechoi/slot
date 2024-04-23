@@ -11,6 +11,7 @@ export default class CRewardManager {
     private matchedLines: number[][] = [];
     private matchedSprites: Sprite[][] = [];
     private lineGraphics: Graphics[] = [];
+    private rectGraphics: Graphics[] = [];
     private curVisibleLine: number = WHOLE_LINES_VISIBLE;
 
     private constructor(payLines_: {line: number[]}[]) {
@@ -87,18 +88,18 @@ export default class CRewardManager {
             return;
         }
         
-        for(const matchLine of this.matchedLines) {
+        for(let i = 0; i < this.matchedLines.length; i++) {
             const lineGraphic = new Graphics();
-            for(let i = 0; i < matchLine.length; i++) {
-                const y = Y_START + (Math.floor((matchLine[i]) / 5) * Y_GAP) + (Y_GAP / 2);
-                if(i == LINE_START) {
+            for(let j = 0; j < this.matchedLines[i].length; j++) {
+                const y = Y_START + (Math.floor((this.matchedLines[i][j]) / 5) * Y_GAP) + (Y_GAP / 2);
+                if(j == LINE_START) {
                     lineGraphic.moveTo(X_START, y);
                 }
 
-                const x = X_START + ((matchLine[i]) % 5) * X_GAP + (X_GAP / 2);
+                const x = X_START + ((this.matchedLines[i][j]) % 5) * X_GAP + (X_GAP / 2);
                 lineGraphic.lineTo(x, y);
 
-                if(i == matchLine.length - 1) {
+                if(j == this.matchedLines[i].length - 1) {
                     lineGraphic.lineTo(X_FINISH, y);
                 }
             }
@@ -108,6 +109,16 @@ export default class CRewardManager {
             lineGraphic.stroke({ width: 5, color: randomColor });
             APP.stage.addChild(lineGraphic);
             this.lineGraphics.push(lineGraphic);
+
+            const rectGraphic = new Graphics();
+            for(const matchedSprite of this.matchedSprites[i]) {
+                rectGraphic.rect(matchedSprite.x, matchedSprite.y, 120, 100);
+                rectGraphic.stroke({ width: 5, color: randomColor });
+            }
+            rectGraphic.zIndex = 2;
+            rectGraphic.visible = false;
+            APP.stage.addChild(rectGraphic);
+            this.rectGraphics.push(rectGraphic);
         }
 
         setTimeout(() => {
@@ -136,6 +147,15 @@ export default class CRewardManager {
     }
 
     ///////////////////////////////////////////////////////////////////////////
+    // 모든 심볼의 visible 설정
+    ///////////////////////////////////////////////////////////////////////////
+    private setAllSymbolBoundaryVisible(bVisible_: boolean): void {
+        for(const rectGraphic of this.rectGraphics) {
+            rectGraphic.visible = bVisible_;
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
     // 라인을 하나씩 그린다.
     ///////////////////////////////////////////////////////////////////////////
     private drawLinesOneByOne(visibleLineIdx_: number): void {
@@ -145,6 +165,7 @@ export default class CRewardManager {
 
         // 우선 다 안 보이게 처리한다.
         this.setAllLinesVisibility(false);
+        this.setAllSymbolBoundaryVisible(false);
 
         // 보여질 라인에 대한 처리
         if(visibleLineIdx_ >= this.lineGraphics.length) {
@@ -162,6 +183,8 @@ export default class CRewardManager {
                 let blinkAtt: {line: number, visible: boolean, count: number} = {line:visibleLineIdx_, visible: true, count: 0};
                 this.curVisibleLine = visibleLineIdx_;
                 this.blinkSymbols(blinkAtt);
+
+                this.rectGraphics[visibleLineIdx_].visible = true;
             }
         }
 
@@ -206,6 +229,12 @@ export default class CRewardManager {
             APP.stage.removeChild(lineGraphic);
         }
         this.lineGraphics = [];
+
+        //this.setAllSymbolBoundaryVisible(false);
+        for(const rectGraphic of this.rectGraphics) {
+            APP.stage.removeChild(rectGraphic);
+        }
+        this.rectGraphics = [];
         this.curVisibleLine = WHOLE_LINES_VISIBLE;
     }
 }
