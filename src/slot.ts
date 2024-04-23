@@ -1,5 +1,5 @@
 import { Assets, Sprite, TextStyle, Text } from "pixi.js";
-import { APP, SYMBOL_MANAGER, REWARD_MANAGER } from "./singleton"
+import { APP, FANCY_TEXT, SYMBOL_MANAGER, REWARD_MANAGER } from "./singleton"
 import CReel from "./reel"
 const REEL_COUNT = 5;
 const SPIN_TERM = 300;
@@ -59,7 +59,7 @@ export default class CSlot {
     ///////////////////////////////////////////////////////////////////////////
     public setUI(): void {
         const style = new TextStyle({fontSize: 25, fill: '#ffffff'});
-        this.totalBetText = new Text({x: 165, y:617, zIndex:2, text: TOTAL_BET, style});
+        this.totalBetText = new Text({x: 155, y:617, zIndex:2, text: FANCY_TEXT(TOTAL_BET), style});
         APP.stage.addChild(this.totalBetText);
     }
 

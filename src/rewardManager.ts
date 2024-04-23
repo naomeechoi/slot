@@ -1,6 +1,6 @@
 import { Sprite, Graphics, TextStyle, Text } from 'pixi.js';
 import { TweenMax } from 'gsap/TweenMax';
-import { APP, SYMBOL_MANAGER } from './singleton';
+import { FANCY_TEXT, APP, SYMBOL_MANAGER } from './singleton';
 
 const SHOW_LINE_TIME = 800;
 const WHOLE_LINES_VISIBLE = -1;
@@ -26,7 +26,7 @@ export default class CRewardManager {
         }
 
         const style = new TextStyle({fontSize: 30, fill: '#ffffff'});
-        this.totalWinText = new Text({x: 400, y:618, zIndex:2, text: 0, style});
+        this.totalWinText = new Text({x: 380, y:618, zIndex:2, text: 0, style});
         this.totalWinText.visible = false;
         APP.stage.addChild(this.totalWinText);
     }
@@ -149,12 +149,13 @@ export default class CRewardManager {
             this.lineWinTexts.push(tempText);
 
             this.totalWin += oneLineWinPay;
+            console.log('total: ' + this.totalWin + ' oneLineWin: ' + oneLineWinPay + ' lineCount: ' + this.matchedLines.length);
         }
 
         // 총합 윈 텍스트
         this.totalWinText.visible = true;
         TweenMax.to(this.totalWinText, 1, {text: this.totalWin, onUpdate: () => {
-            this.totalWinText.text = parseInt(this.totalWinText.text);
+            this.totalWinText.text = FANCY_TEXT(parseInt(this.totalWinText.text));
         }})
 
         setTimeout(() => {
@@ -289,6 +290,7 @@ export default class CRewardManager {
 
         this.curVisibleLine = WHOLE_LINES_VISIBLE;
 
+        this.totalWin = 0;
         this.totalWinText.visible = false;
         this.totalWinText.text = 0;
     }
