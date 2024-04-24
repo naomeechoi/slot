@@ -8,18 +8,31 @@ const WHOLE_LINES_VISIBLE = -1;
 ///////////////////////////////////////////////////////////////////////////////
 export default class CRewardManager {
     private static instance: CRewardManager | null = null;
+
+    // 페이라인
     private readonly payLines: number[][] = [];
+
+    // 맞춰진 라인에 대한 배열, 맞춰진 라인에 맞는 심볼 스트라이트에 대한 배열
     private matchedLines: number[][] = [];
     private matchedSprites: Sprite[][] = [];
+
+    // 라인, 사각형, 라인마다 이긴 금액
     private lineGraphics: Graphics[] = [];
     private rectGraphics: Graphics[] = [];
     private lineWinTexts: Text[] = [];
-    private totalWinText: Text;
-    private totalBetText: Text;
+
+    // 현재 어떤 라인이 보여지고 있는지
     private curVisibleLine: number = WHOLE_LINES_VISIBLE;
+    
+    // 한 라인당 받을 수 있는 기초 금액
     private oneLineCredit: number = 0;
-    private totalWin: number = 0;
-    private totalBet: number = 0;
+    
+    // 이긴 금액
+    private win: number = 0;
+    private winText: Text;
+
+    // 토탈 베팅 금액 관련
+    private totalBetText: Text;
     private totalBetArray: number[] = [];
     private totalBetCurIdx: number = 0;
     private totalBetLeftButton: Graphics;
@@ -34,19 +47,21 @@ export default class CRewardManager {
         for(const bet of totalBet_) {
             this.totalBetArray.push(bet);
         }
-        this.totalBet = this.totalBetArray[this.totalBetCurIdx];
 
+        // 이긴 금액 텍스트 셋팅
         let style = new TextStyle({fontSize: 28, fill: '#ffffff'});
-        this.totalWinText = new Text({x: 455, y:635, zIndex:2, text: 0, style});
-        this.totalWinText.visible = false;
-        this.totalWinText.anchor.set(0.5);
-        APP.stage.addChild(this.totalWinText);
+        this.winText = new Text({x: 455, y:635, zIndex:2, text: 0, style});
+        this.winText.visible = false;
+        this.winText.anchor.set(0.5);
+        APP.stage.addChild(this.winText);
 
+        // 전체 베팅 금액 텍스트 셋팅
         style = new TextStyle({fontSize: 22, fill: '#ffffff'});
-        this.totalBetText = new Text({x: 207, y:631, zIndex:2, text: this.addDollarSignAndCommaToNumber(this.totalBet), style});
+        this.totalBetText = new Text({x: 207, y:631, zIndex:2, text: this.addDollarSignAndCommaToNumber(this.totalBetArray[this.totalBetCurIdx]), style});
         this.totalBetText.anchor.set(0.5);
         APP.stage.addChild(this.totalBetText);
 
+        // 전체 베팅 금액 변경 왼쪽 버튼
         this.totalBetLeftButton = new Graphics();
         this.totalBetLeftButton.rect(110, 610, 40, 40);
         this.totalBetLeftButton.fill({color: 0x66cc00, alpha: 0});
@@ -55,6 +70,7 @@ export default class CRewardManager {
         this.totalBetLeftButton.on('pointerdown', this.downTotalBet.bind(this));
         APP.stage.addChild(this.totalBetLeftButton);
 
+        // 전체 베팅 금액 변경 오른쪽
         this.totalBetRightButton = new Graphics();
         this.totalBetRightButton.rect(265, 610, 40, 40);
         this.totalBetRightButton.fill({color: 0x66cc00, alpha: 0});
@@ -76,15 +92,21 @@ export default class CRewardManager {
         return this.instance;
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // 컨트롤 토탈 벹 버튼
+    ///////////////////////////////////////////////////////////////////////////
     private ControlTotalBetButtonCursor(): void {
-        if(this.totalBetCurIdx > 0) {
+        const LEFT_BOUNDARY = 0;
+        const RIGHT_BOUNDARY = this.totalBetArray.length - 1;
+
+        if(this.totalBetCurIdx > LEFT_BOUNDARY) {
             this.totalBetLeftButton.cursor = 'pointer';
         }
         else {
             this.totalBetLeftButton.cursor = 'default';
         }
 
-        if(this.totalBetCurIdx < this.totalBetArray.length - 1) {
+        if(this.totalBetCurIdx < RIGHT_BOUNDARY) {
             this.totalBetRightButton.cursor = 'pointer';
         }
         else {
@@ -92,23 +114,27 @@ export default class CRewardManager {
         }
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // 토탈 벹 낮추기
+    ///////////////////////////////////////////////////////////////////////////
     private downTotalBet() {
         if(this.totalBetCurIdx > 0) {
             this.totalBetCurIdx--;
             this.totalBetLeftButton.cursor = 'pointer';
-            this.totalBet = this.totalBetArray[this.totalBetCurIdx];
-            this.totalBetText.text = this.addDollarSignAndCommaToNumber(this.totalBet);
+            this.totalBetText.text = this.addDollarSignAndCommaToNumber(this.totalBetArray[this.totalBetCurIdx]);
         }
 
         this.ControlTotalBetButtonCursor();
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // 토탈 벹 높이기
+    ///////////////////////////////////////////////////////////////////////////
     private upTotalBet() {
         if(this.totalBetCurIdx < this.totalBetArray.length - 1) {
             this.totalBetCurIdx++;
             this.totalBetRightButton.cursor = 'pointer';
-            this.totalBet = this.totalBetArray[this.totalBetCurIdx];
-            this.totalBetText.text = this.addDollarSignAndCommaToNumber(this.totalBet);
+            this.totalBetText.text = this.addDollarSignAndCommaToNumber(this.totalBetArray[this.totalBetCurIdx]);
         }
 
         this.ControlTotalBetButtonCursor();
@@ -121,7 +147,7 @@ export default class CRewardManager {
         const PREV_SYMBOL_NOT_DECIDED = -1;
         const ZERO_CONSECUTIVE = 0;
 
-        this.oneLineCredit = this.totalBet / 125;
+        this.oneLineCredit = this.totalBetArray[this.totalBetCurIdx] / 125;
 
         for(const payLine of this.payLines) {
             let prevSymbolUniqueNum: number = PREV_SYMBOL_NOT_DECIDED;
@@ -154,13 +180,13 @@ export default class CRewardManager {
                 this.matchedSprites.push(matchedSpriteArray);
             }
         }
-        this.drawLinesAndRects();
+        this.drawResult();
     }
     
     ///////////////////////////////////////////////////////////////////////////
-    // 맞춰진 라인을 그린다.
+    // 맞춰진 라인, 사각형, 이긴 금액을 그린다.
     ///////////////////////////////////////////////////////////////////////////
-    private drawLinesAndRects(): void {
+    private drawResult(): void {
         if(this.matchedLines.length == 0) {
             return;
         }
@@ -220,27 +246,40 @@ export default class CRewardManager {
             APP.stage.addChild(tempText);
             this.lineWinTexts.push(tempText);
 
-            this.totalWin += oneLineWinPay;
-            console.log('total: ' + this.totalWin + ' oneLineWin: ' + oneLineWinPay + ' lineCount: ' + this.matchedLines.length);
+            this.win += oneLineWinPay;
         }
 
         // 총합 윈 텍스트
-        this.totalWinText.visible = true;
-        TweenMax.to(this.totalWinText, 1, {text: this.totalWin, onUpdate: () => {
-            this.totalWinText.text = this.addDollarSignAndCommaToNumber(parseInt(this.totalWinText.text));
+        this.winText.visible = true;
+        TweenMax.to(this.winText, 1, {text: this.win, onUpdate: () => {
+            this.winText.text = this.addDollarSignAndCommaToNumber(parseInt(this.winText.text));
         }})
 
+        // 라인 하나씩 보여주기 위해서 준비
         setTimeout(() => {
             this.showLinesAndRectsOneByOne(0);
         }, SHOW_LINE_TIME * 2);
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // 모든 라인의 visible 설정
+    // visible 설정
     ///////////////////////////////////////////////////////////////////////////
-    private setAllLinesVisible(bVisible_: boolean): void {
-        for(const lineGraphic of this.lineGraphics) {
-            lineGraphic.visible = bVisible_;
+    private setGraphicsOrTextVisible(GraphicsArray_: Graphics[]|Text[], bVisible_: boolean, visibleIdx_:number = -1): void {
+        if(visibleIdx_ != -1) {
+            if(GraphicsArray_[visibleIdx_] == null) {
+                return;
+            }
+
+            for(const graphic of GraphicsArray_) {
+                graphic.visible = false;
+            }
+
+            GraphicsArray_[visibleIdx_].visible = true;
+            return;
+        }
+
+        for(const graphic of GraphicsArray_) {
+            graphic.visible = bVisible_;
         }
     }
 
@@ -256,24 +295,6 @@ export default class CRewardManager {
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // 모든 심볼의 외곽선 visible 설정
-    ///////////////////////////////////////////////////////////////////////////
-    private setAllSymbolBorderVisible(bVisible_: boolean): void {
-        for(const rectGraphic of this.rectGraphics) {
-            rectGraphic.visible = bVisible_;
-        }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // 모든 라인 윈 페이 visible 설정
-    ///////////////////////////////////////////////////////////////////////////
-    private setAllLineWinPaysVisible(bVisible_: boolean): void {
-        for(const lineWinText of this.lineWinTexts) {
-            lineWinText.visible = bVisible_;
-        }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
     // 라인을 하나씩 그린다.
     ///////////////////////////////////////////////////////////////////////////
     private showLinesAndRectsOneByOne(visibleLineIdx_: number): void {
@@ -282,9 +303,9 @@ export default class CRewardManager {
         }
 
         // 우선 다 안 보이게 처리한다.
-        this.setAllLinesVisible(false);
-        this.setAllSymbolBorderVisible(false);
-        this.setAllLineWinPaysVisible(false);
+        this.setGraphicsOrTextVisible(this.lineGraphics, false);
+        this.setGraphicsOrTextVisible(this.rectGraphics, false);
+        this.setGraphicsOrTextVisible(this.lineWinTexts, false);
 
         // 보여질 라인에 대한 처리
         if(visibleLineIdx_ >= this.lineGraphics.length) {
@@ -292,19 +313,18 @@ export default class CRewardManager {
             this.curVisibleLine = WHOLE_LINES_VISIBLE;
 
             // 라인이 다 보여져야 한다.
-            this.setAllLinesVisible(true);
+            this.setGraphicsOrTextVisible(this.lineGraphics, true);
             this.setAllSymbolVisible(true);
         }
         else {
             if(this.lineGraphics[visibleLineIdx_] != null) {
-                this.lineGraphics[visibleLineIdx_].visible = true;
+                this.setGraphicsOrTextVisible(this.lineGraphics, false, visibleLineIdx_);
+                this.setGraphicsOrTextVisible(this.rectGraphics, false, visibleLineIdx_);
+                this.setGraphicsOrTextVisible(this.lineWinTexts, false, visibleLineIdx_);
 
                 let blinkAtt: {line: number, visible: boolean, count: number} = {line:visibleLineIdx_, visible: true, count: 0};
                 this.curVisibleLine = visibleLineIdx_;
                 this.blinkSymbols(blinkAtt);
-
-                this.rectGraphics[visibleLineIdx_].visible = true;
-                this.lineWinTexts[visibleLineIdx_].visible = true;
             }
         }
 
@@ -362,36 +382,46 @@ export default class CRewardManager {
 
         this.curVisibleLine = WHOLE_LINES_VISIBLE;
 
-        this.totalWin = 0;
-        this.totalWinText.visible = false;
-        this.totalWinText.text = 0;
+        this.win = 0;
+        this.winText.visible = false;
+        this.winText.text = 0;
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // 돈 표시에 달러 사인, 콤마 추가 하기
+    ///////////////////////////////////////////////////////////////////////////
     private addDollarSignAndCommaToNumber(number_: number | string): string {
-
         if(typeof number_ == "string") {
             number_ = parseInt(number_);
         }
 
-        let originalNumber: number = number_;
-        let commaCount = 0;
-        while(originalNumber >= 1000) {
+        // 콤마를 몇 개 찍어야 하는지 계산
+        let commaCount: number = 0;
+        let tempNum: number = number_;
+        while(tempNum >= 1000) {
             commaCount++;
-            originalNumber /= 1000;
+            tempNum /= 1000;
         }
 
+        // 찍을 콤마 없다면 리턴
         if(commaCount == 0) {
-            return "";
+            if(number_ > 0) {
+                return number_.toString();
+            }
+            else {
+                return "";
+            }
         }
 
-        let originalNumberText = number_.toString();
-        
-        let textParts: string[] = originalNumberText.split('').reverse();
+        // 콤마 추가
+        let numberStr = number_.toString();
+        let textParts: string[] = numberStr.split('').reverse();
         while(commaCount > 0) {
             textParts.splice(commaCount * 3, 0, ',');
             commaCount--;
         }
         
+        // 달러 표시 달고 배열 합치기
         let result: string = "$";
         for(let i = textParts.length - 1; i >= 0; i--) {
             result += textParts[i];
