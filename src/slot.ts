@@ -11,8 +11,9 @@ export default class CSlot {
     private observerReels: CReel[] = [];
     private bStartToCheckPayLines: boolean = false;
     private bCanStart: boolean = true;
-    private totalBetText!: Text;
     private startButton!: Graphics;
+    private autoButton!: Graphics;
+    private bAuto: boolean = false;
 
     private constructor(){
     }
@@ -66,6 +67,15 @@ export default class CSlot {
         this.startButton.cursor = 'pointer';
         this.startButton.on('pointerdown', this.startGame.bind(this));
         APP.stage.addChild(this.startButton);
+
+        this.autoButton = new Graphics();
+        this.autoButton.ellipse(685, 623, 43, 20);
+        this.autoButton.fill(0xffef55);
+        this.autoButton.zIndex = 2;
+        this.autoButton.eventMode = 'static';
+        this.autoButton.cursor = 'pointer';
+        this.autoButton.on('pointerdown', this.autoGame.bind(this));
+        APP.stage.addChild(this.autoButton);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -125,8 +135,15 @@ export default class CSlot {
         }
 
         if(REWARD_MANAGER.isFinishedCheckResult()) {
+
             this.bCanStart = true;
             this.startButton.cursor = 'pointer';
+
+            if(this.bAuto) {
+                setTimeout(() => {
+                    this.startGame();
+                }, REWARD_MANAGER.getShowLInesTime());
+            }
         }
     }
 
@@ -156,6 +173,18 @@ export default class CSlot {
 
         // 페이라인 그려진게 있다면 지운다.
         REWARD_MANAGER.clearLines();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // 오토 플레이을 시작한다.
+    ///////////////////////////////////////////////////////////////////////////
+    private autoGame(): void {
+        if(this.bAuto == false) {
+            this.bAuto = true;
+            this.startGame();
+        } else {
+            this.bAuto = false;
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////

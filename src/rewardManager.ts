@@ -276,6 +276,17 @@ export default class CRewardManager {
     }
 
     ///////////////////////////////////////////////////////////////////////////
+    // 오토 플레이에서 라인 보여주는 시간 정하기 위해
+    ///////////////////////////////////////////////////////////////////////////
+    public getShowLInesTime(): number {
+        let count = this.matchedLines.length;
+        if(this.matchedLines.length != 0) {
+            count--;
+        }
+        return SHOW_LINE_TIME * 2 + count * SHOW_LINE_TIME;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
     // visible 설정
     ///////////////////////////////////////////////////////////////////////////
     private setGraphicsOrTextVisible(GraphicsArray_: Graphics[]|Text[], bVisible_: boolean, visibleIdx_:number = -1): void {
