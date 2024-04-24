@@ -61,8 +61,9 @@ export default class CSlot {
     public setUI(): void {
         // 시작 버튼
         this.startButton = new Graphics();
-        this.startButton.circle(805, 623, 30);
-        this.startButton.fill(0xffef55);
+        this.startButton.circle(805, 623, 41);
+        this.startButton.fill({alpha: 0.3});
+        this.startButton.tint = 0xffef55;
         this.startButton.zIndex = 2;
         this.startButton.eventMode = 'static';
         this.startButton.cursor = 'pointer';
@@ -73,6 +74,12 @@ export default class CSlot {
         this.autoButton = new Graphics();
         this.autoButton.ellipse(685, 623, 43, 20);
         this.autoButton.fill(0xffef55);
+
+        this.autoButton.moveTo(670, 615);
+        this.autoButton.lineTo(710, 625);
+        this.autoButton.lineTo(670, 635);
+        this.autoButton.fill(0x04B45F);
+
         this.autoButton.zIndex = 2;
         this.autoButton.eventMode = 'static';
         this.autoButton.cursor = 'pointer';
@@ -142,12 +149,14 @@ export default class CSlot {
 
         if(REWARD_MANAGER.isFinishedCheckResult()) {
             this.bCanStart = true;
-            this.startButton.cursor = 'pointer';
 
             if(this.bAuto) {
                 setTimeout(() => {
                     this.startGame();
                 }, REWARD_MANAGER.getShowLInesTime());
+            } else {
+                this.startButton.cursor = 'pointer';
+                this.startButton.tint = 0xffef55;
             }
         }
     }
@@ -162,6 +171,7 @@ export default class CSlot {
         
         this.bCanStart = false;
         this.startButton.cursor = 'default';
+        this.startButton.tint = 0x000000;
 
         for(let i = 0; i < REEL_COUNT; i++){
             setTimeout(() => {
@@ -191,8 +201,25 @@ export default class CSlot {
         if(this.bAuto == false) {
             this.bAuto = true;
             this.startGame();
+
+            this.autoButton.clear();
+            this.autoButton.ellipse(685, 623, 43, 20);
+            this.autoButton.fill(0xffef55);
+    
+            this.autoButton.rect(668, 615, 10, 20);
+            this.autoButton.rect(688, 615, 10, 20);
+            this.autoButton.fill(0x04B45F);
         } else {
             this.bAuto = false;
+
+            this.autoButton.clear();
+            this.autoButton.ellipse(685, 623, 43, 20);
+            this.autoButton.fill(0xffef55);
+    
+            this.autoButton.moveTo(670, 615);
+            this.autoButton.lineTo(710, 625);
+            this.autoButton.lineTo(670, 635);
+            this.autoButton.fill(0x04B45F);
         }
     }
 
