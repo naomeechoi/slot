@@ -121,14 +121,12 @@ export default class CSlot {
 
                 // 리워드 메니저가 계산하고 라인을 그리도록 정보를 넘겨준다.
                 REWARD_MANAGER.checkResult(symbolSpritesOnSlot);
-
-                // 시작하지 못하도록 잠시 막아둔다.
-                setTimeout(() => {
-                    this.bCanStart = true;
-                    this.startButton.cursor = 'pointer';
-                }, 1000);
-                
             }
+        }
+
+        if(REWARD_MANAGER.isFinishedCheckResult()) {
+            this.bCanStart = true;
+            this.startButton.cursor = 'pointer';
         }
     }
 

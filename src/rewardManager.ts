@@ -38,6 +38,9 @@ export default class CRewardManager {
     private totalBetLeftButton: Graphics;
     private totalBetRightButton: Graphics;
 
+    // 결과 체크 끝났는 지
+    private bFinishedCheckResult: boolean = false;
+
     private constructor(payLines_: {line: number[]}[], totalBet_: number[]) {
         for(let i = 0; i < payLines_.length; i++){
             const curLine = payLines_[i];
@@ -188,6 +191,7 @@ export default class CRewardManager {
     ///////////////////////////////////////////////////////////////////////////
     private drawResult(): void {
         if(this.matchedLines.length == 0) {
+            this.bFinishedCheckResult = true;
             return;
         }
 
@@ -201,7 +205,7 @@ export default class CRewardManager {
 
         const BORDER_WIDTH = 5;
         const Z_FRONT = 2;
-        
+
         for(let i = 0; i < this.matchedLines.length; i++) {
             const RANDOM_COLOR = Math.floor(Math.random() * 0xFFFFFF) + 1;
 
@@ -253,12 +257,22 @@ export default class CRewardManager {
         this.winText.visible = true;
         TweenMax.to(this.winText, 1, {text: this.win, onUpdate: () => {
             this.winText.text = this.addDollarSignAndCommaToNumber(parseInt(this.winText.text));
-        }})
+        }, onComplete: () => {       
+            setTimeout(() => {
+            this.bFinishedCheckResult = true;
+        }, 300);}});
 
         // 라인 하나씩 보여주기 위해서 준비
         setTimeout(() => {
             this.showLinesAndRectsOneByOne(0);
         }, SHOW_LINE_TIME * 2);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // 돈 올리는 것까지 전부 끝났는지 확인
+    ///////////////////////////////////////////////////////////////////////////
+    public isFinishedCheckResult() {
+        return this.bFinishedCheckResult;
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -385,6 +399,7 @@ export default class CRewardManager {
         this.win = 0;
         this.winText.visible = false;
         this.winText.text = 0;
+        this.bFinishedCheckResult = false;
     }
 
     ///////////////////////////////////////////////////////////////////////////
