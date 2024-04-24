@@ -51,6 +51,11 @@ export default class CRewardManager {
             this.totalBetArray.push(bet);
         }
 
+        if(this.payLines.length == 0 || this.totalBetArray.length == 0) {
+            //TODO
+            //게임 시작 되지 않게 막아야 함
+        }
+
         // 이긴 금액 텍스트 셋팅
         let style = new TextStyle({fontSize: 28, fill: '#ffffff'});
         this.winText = new Text({x: 455, y:635, zIndex:2, text: 0, style});
@@ -120,7 +125,11 @@ export default class CRewardManager {
     ///////////////////////////////////////////////////////////////////////////
     // 토탈 벹 낮추기
     ///////////////////////////////////////////////////////////////////////////
-    private downTotalBet() {
+    private downTotalBet(): void {
+        if(this.totalBetArray[this.totalBetCurIdx] == null) {
+            return;
+        }
+
         if(this.totalBetCurIdx > 0) {
             this.totalBetCurIdx--;
             this.totalBetLeftButton.cursor = 'pointer';
@@ -133,7 +142,11 @@ export default class CRewardManager {
     ///////////////////////////////////////////////////////////////////////////
     // 토탈 벹 높이기
     ///////////////////////////////////////////////////////////////////////////
-    private upTotalBet() {
+    private upTotalBet(): void {
+        if(this.totalBetArray[this.totalBetCurIdx] == null) {
+            return;
+        }
+
         if(this.totalBetCurIdx < this.totalBetArray.length - 1) {
             this.totalBetCurIdx++;
             this.totalBetRightButton.cursor = 'pointer';
@@ -147,6 +160,10 @@ export default class CRewardManager {
     // 페이라인(결과)을 체크하고 라인을 그린다.
     ///////////////////////////////////////////////////////////////////////////
     public checkResult(symbolSpritesArray_: Sprite[]): void {
+        if(this.totalBetArray[this.totalBetCurIdx] == null) {
+            return;
+        }
+
         const PREV_SYMBOL_NOT_DECIDED = -1;
         const ZERO_CONSECUTIVE = 0;
 
@@ -369,6 +386,10 @@ export default class CRewardManager {
             return;
         }
         
+        if(this.matchedSprites[blinkAttr_.line] == null) {
+            return;
+        }
+
         for(let symbolSprite of this.matchedSprites[blinkAttr_.line]) {
             symbolSprite.visible = blinkAttr_.visible;
         }

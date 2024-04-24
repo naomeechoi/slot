@@ -59,6 +59,7 @@ export default class CSlot {
     // ui 셋팅
     ///////////////////////////////////////////////////////////////////////////
     public setUI(): void {
+        // 시작 버튼
         this.startButton = new Graphics();
         this.startButton.circle(805, 623, 30);
         this.startButton.fill(0xffef55);
@@ -68,6 +69,7 @@ export default class CSlot {
         this.startButton.on('pointerdown', this.startGame.bind(this));
         APP.stage.addChild(this.startButton);
 
+        // 오토 플레이 버튼
         this.autoButton = new Graphics();
         this.autoButton.ellipse(685, 623, 43, 20);
         this.autoButton.fill(0xffef55);
@@ -90,6 +92,10 @@ export default class CSlot {
 
         // 릴에게 다음 릴들을 참조할 수 있게 한다.
         for(let i = 0; i < REEL_COUNT - 1; i++){
+            if(this.observerReels[i] == null) {
+                continue;
+            }
+
             this.observerReels[i].setNextAdjacentReel(this.observerReels[i+1]);
         }
     }
@@ -135,7 +141,6 @@ export default class CSlot {
         }
 
         if(REWARD_MANAGER.isFinishedCheckResult()) {
-
             this.bCanStart = true;
             this.startButton.cursor = 'pointer';
 
@@ -160,6 +165,10 @@ export default class CSlot {
 
         for(let i = 0; i < REEL_COUNT; i++){
             setTimeout(() => {
+                if(this.observerReels[i] == null) {
+                    return;
+                }
+
                 this.observerReels[i].start();
             }, i * SPIN_TERM);
         }
@@ -208,6 +217,10 @@ export default class CSlot {
         const reelStopNumbers = this.randomizeStopNumber(); 
         for(let i = 0; i < REEL_COUNT; i++){
             setTimeout(() => {
+                if(this.observerReels[i] == null) {
+                    return;
+                }
+
                 this.observerReels[i].SetReelStopLocation(reelStopNumbers[i]);
             }, i * SPIN_TERM);
         }

@@ -41,6 +41,11 @@ export default class CReel {
     constructor(reelIdx_: number) {
         this.reelIdx = reelIdx_;
 
+        if(SYMBOL_MANAGER.getDefaultSymbolsPos()[this.reelIdx] == null) {
+            // TODO
+            // 실행 되면 안 됌
+        }
+
         // 심볼들의 초기 스크린상 위치를 받아서 셋팅해준다.
         const symbolsPosOnReel: Array<{x: number, y: number}> = SYMBOL_MANAGER.getDefaultSymbolsPos()[this.reelIdx];
         if(symbolsPosOnReel != null){
