@@ -1,6 +1,6 @@
-import { Sprite, Graphics, TextStyle, Text } from 'pixi.js';
+import { Sprite, Graphics, TextStyle, Text, textureBit } from 'pixi.js';
 import { TweenMax } from 'gsap/TweenMax';
-import { FANCY_TEXT, APP, SYMBOL_MANAGER } from './singleton';
+import { APP, SYMBOL_MANAGER } from './singleton';
 
 const SHOW_LINE_TIME = 800;
 const WHOLE_LINES_VISIBLE = -1;
@@ -15,41 +15,113 @@ export default class CRewardManager {
     private rectGraphics: Graphics[] = [];
     private lineWinTexts: Text[] = [];
     private totalWinText: Text;
+    private totalBetText: Text;
     private curVisibleLine: number = WHOLE_LINES_VISIBLE;
     private oneLineCredit: number = 0;
     private totalWin: number = 0;
+    private totalBet: number = 0;
+    private totalBetArray: number[] = [];
+    private totalBetCurIdx: number = 0;
+    private totalBetLeftButton: Graphics;
+    private totalBetRightButton: Graphics;
 
-    private constructor(payLines_: {line: number[]}[]) {
+    private constructor(payLines_: {line: number[]}[], totalBet_: number[]) {
         for(let i = 0; i < payLines_.length; i++){
             const curLine = payLines_[i];
             this.payLines.push(curLine.line);
         }
 
-        const style = new TextStyle({fontSize: 30, fill: '#ffffff'});
-        this.totalWinText = new Text({x: 380, y:618, zIndex:2, text: 0, style});
+        for(const bet of totalBet_) {
+            this.totalBetArray.push(bet);
+        }
+        this.totalBet = this.totalBetArray[this.totalBetCurIdx];
+
+        let style = new TextStyle({fontSize: 28, fill: '#ffffff'});
+        this.totalWinText = new Text({x: 455, y:635, zIndex:2, text: 0, style});
         this.totalWinText.visible = false;
+        this.totalWinText.anchor.set(0.5);
         APP.stage.addChild(this.totalWinText);
+
+        style = new TextStyle({fontSize: 22, fill: '#ffffff'});
+        this.totalBetText = new Text({x: 207, y:631, zIndex:2, text: this.addDollarSignAndCommaToNumber(this.totalBet), style});
+        this.totalBetText.anchor.set(0.5);
+        APP.stage.addChild(this.totalBetText);
+
+        this.totalBetLeftButton = new Graphics();
+        this.totalBetLeftButton.rect(110, 610, 40, 40);
+        this.totalBetLeftButton.fill({color: 0x66cc00, alpha: 0});
+        this.totalBetLeftButton.zIndex = 2;
+        this.totalBetLeftButton.eventMode = 'static';
+        this.totalBetLeftButton.on('pointerdown', this.downTotalBet.bind(this));
+        APP.stage.addChild(this.totalBetLeftButton);
+
+        this.totalBetRightButton = new Graphics();
+        this.totalBetRightButton.rect(265, 610, 40, 40);
+        this.totalBetRightButton.fill({color: 0x66cc00, alpha: 0});
+        this.totalBetRightButton.zIndex = 2;
+        this.totalBetRightButton.eventMode = 'static';
+        this.totalBetRightButton.cursor = 'pointer';
+        this.totalBetRightButton.on('pointerdown', this.upTotalBet.bind(this));
+        APP.stage.addChild(this.totalBetRightButton);
     }
 
     ///////////////////////////////////////////////////////////////////////////
     // 싱글톤 패턴, 하나의 인스턴스만 보장
     ///////////////////////////////////////////////////////////////////////////
-    public static getInstance(payLines_: {line: number[]}[]): CRewardManager {
+    public static getInstance(payLines_: {line: number[]}[], totalBet_: number[]): CRewardManager {
         if(this.instance == null) {
-            this.instance = new CRewardManager(payLines_);
+            this.instance = new CRewardManager(payLines_, totalBet_);
         }
 
         return this.instance;
     }
 
+    private ControlTotalBetButtonCursor(): void {
+        if(this.totalBetCurIdx > 0) {
+            this.totalBetLeftButton.cursor = 'pointer';
+        }
+        else {
+            this.totalBetLeftButton.cursor = 'default';
+        }
+
+        if(this.totalBetCurIdx < this.totalBetArray.length - 1) {
+            this.totalBetRightButton.cursor = 'pointer';
+        }
+        else {
+            this.totalBetRightButton.cursor = 'default';
+        }
+    }
+
+    private downTotalBet() {
+        if(this.totalBetCurIdx > 0) {
+            this.totalBetCurIdx--;
+            this.totalBetLeftButton.cursor = 'pointer';
+            this.totalBet = this.totalBetArray[this.totalBetCurIdx];
+            this.totalBetText.text = this.addDollarSignAndCommaToNumber(this.totalBet);
+        }
+
+        this.ControlTotalBetButtonCursor();
+    }
+
+    private upTotalBet() {
+        if(this.totalBetCurIdx < this.totalBetArray.length - 1) {
+            this.totalBetCurIdx++;
+            this.totalBetRightButton.cursor = 'pointer';
+            this.totalBet = this.totalBetArray[this.totalBetCurIdx];
+            this.totalBetText.text = this.addDollarSignAndCommaToNumber(this.totalBet);
+        }
+
+        this.ControlTotalBetButtonCursor();
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // 페이라인(결과)을 체크하고 라인을 그린다.
     ///////////////////////////////////////////////////////////////////////////
-    public checkResult(totalBet_: number, symbolSpritesArray_: Sprite[]): void {
+    public checkResult(symbolSpritesArray_: Sprite[]): void {
         const PREV_SYMBOL_NOT_DECIDED = -1;
         const ZERO_CONSECUTIVE = 0;
 
-        this.oneLineCredit = totalBet_ / 125;
+        this.oneLineCredit = this.totalBet / 125;
 
         for(const payLine of this.payLines) {
             let prevSymbolUniqueNum: number = PREV_SYMBOL_NOT_DECIDED;
@@ -155,7 +227,7 @@ export default class CRewardManager {
         // 총합 윈 텍스트
         this.totalWinText.visible = true;
         TweenMax.to(this.totalWinText, 1, {text: this.totalWin, onUpdate: () => {
-            this.totalWinText.text = FANCY_TEXT(parseInt(this.totalWinText.text));
+            this.totalWinText.text = this.addDollarSignAndCommaToNumber(parseInt(this.totalWinText.text));
         }})
 
         setTimeout(() => {
@@ -293,5 +365,38 @@ export default class CRewardManager {
         this.totalWin = 0;
         this.totalWinText.visible = false;
         this.totalWinText.text = 0;
+    }
+
+    private addDollarSignAndCommaToNumber(number_: number | string): string {
+
+        if(typeof number_ == "string") {
+            number_ = parseInt(number_);
+        }
+
+        let originalNumber: number = number_;
+        let commaCount = 0;
+        while(originalNumber >= 1000) {
+            commaCount++;
+            originalNumber /= 1000;
+        }
+
+        if(commaCount == 0) {
+            return "";
+        }
+
+        let originalNumberText = number_.toString();
+        
+        let textParts: string[] = originalNumberText.split('').reverse();
+        while(commaCount > 0) {
+            textParts.splice(commaCount * 3, 0, ',');
+            commaCount--;
+        }
+        
+        let result: string = "$";
+        for(let i = textParts.length - 1; i >= 0; i--) {
+            result += textParts[i];
+        }
+        
+        return result;
     }
 }

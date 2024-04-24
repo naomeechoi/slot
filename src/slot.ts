@@ -1,10 +1,9 @@
-import { Assets, Sprite, TextStyle, Text } from "pixi.js";
-import { APP, FANCY_TEXT, SYMBOL_MANAGER, REWARD_MANAGER } from "./singleton"
+import { Assets, Graphics, Sprite, TextStyle, Text } from "pixi.js";
+import { APP, SYMBOL_MANAGER, REWARD_MANAGER } from "./singleton"
 import CReel from "./reel"
 const REEL_COUNT = 5;
 const SPIN_TERM = 300;
 const SPIN_TIME = 0;
-const TOTAL_BET = 250000;
 
 ///////////////////////////////////////////////////////////////////////////////
 export default class CSlot {
@@ -13,6 +12,7 @@ export default class CSlot {
     private bStartToCheckPayLines: boolean = false;
     private bCanStart: boolean = true;
     private totalBetText!: Text;
+    private startButton!: Graphics;
 
     private constructor(){
     }
@@ -58,9 +58,14 @@ export default class CSlot {
     // ui 셋팅
     ///////////////////////////////////////////////////////////////////////////
     public setUI(): void {
-        const style = new TextStyle({fontSize: 25, fill: '#ffffff'});
-        this.totalBetText = new Text({x: 155, y:617, zIndex:2, text: FANCY_TEXT(TOTAL_BET), style});
-        APP.stage.addChild(this.totalBetText);
+        this.startButton = new Graphics();
+        this.startButton.circle(805, 623, 30);
+        this.startButton.fill(0xffef55);
+        this.startButton.zIndex = 2;
+        this.startButton.eventMode = 'static';
+        this.startButton.cursor = 'pointer';
+        this.startButton.on('pointerdown', this.startGame.bind(this));
+        APP.stage.addChild(this.startButton);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -115,11 +120,12 @@ export default class CSlot {
                 }
 
                 // 리워드 메니저가 계산하고 라인을 그리도록 정보를 넘겨준다.
-                REWARD_MANAGER.checkResult(TOTAL_BET, symbolSpritesOnSlot);
+                REWARD_MANAGER.checkResult(symbolSpritesOnSlot);
 
                 // 시작하지 못하도록 잠시 막아둔다.
                 setTimeout(() => {
                     this.bCanStart = true;
+                    this.startButton.cursor = 'pointer';
                 }, 1000);
                 
             }
@@ -135,6 +141,8 @@ export default class CSlot {
         }
         
         this.bCanStart = false;
+        this.startButton.cursor = 'default';
+
         for(let i = 0; i < REEL_COUNT; i++){
             setTimeout(() => {
                 this.observerReels[i].start();
@@ -176,13 +184,6 @@ export default class CSlot {
                 this.observerReels[i].SetReelStopLocation(reelStopNumbers[i]);
             }, i * SPIN_TERM);
         }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // 클릭 이벤트를 받아온다.
-    ///////////////////////////////////////////////////////////////////////////
-    public mouseEventFromClient(event_: MouseEvent): void {
-        this.startGame();
     }
 
     ///////////////////////////////////////////////////////////////////////////
