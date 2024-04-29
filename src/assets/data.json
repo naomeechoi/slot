@@ -4,59 +4,73 @@
        "SymbolInfo":[
               {
                      "identifyNum": 0,
-                     "path": "assets/0.png"
+                     "path": "assets/0.png",
+                     "mulByConsecutiveCount": []
               },
               {
                      "identifyNum": 1,
-                     "path": "assets/1.png"
+                     "path": "assets/1.png",
+                     "mulByConsecutiveCount": [{"key":3, "value":4000}]
               },
               {
                      "identifyNum": 2,
-                     "path": "assets/2.png"
+                     "path": "assets/2.png",
+                     "mulByConsecutiveCount": [{"key":3, "value":1500}]
               },
               {
                      "identifyNum": 3,
-                     "path": "assets/3.png"
+                     "path": "assets/3.png",
+                     "mulByConsecutiveCount": [{"key":3, "value":400}]
               },
               {
                      "identifyNum": 4,
-                     "path": "assets/4.png"
+                     "path": "assets/4.png",
+                     "mulByConsecutiveCount": [{"key":5, "value":1000}, {"key":4, "value":400}, {"key":3, "value":75}, {"key":2, "value":10}]
               },
               {
                      "identifyNum": 5,
-                     "path": "assets/5.png"
+                     "path": "assets/5.png",
+                     "mulByConsecutiveCount": [{"key":5, "value":250}, {"key":4, "value":100}, {"key":3, "value":50}, {"key":2, "value":5}]
               },
               {
                      "identifyNum": 6,
-                     "path": "assets/6.png"
+                     "path": "assets/6.png",
+                     "mulByConsecutiveCount": [{"key":5, "value":250}, {"key":4, "value":100}, {"key":3, "value":50}]
               },
               {
                      "identifyNum": 7,
-                     "path": "assets/7.png"
+                     "path": "assets/7.png",
+                     "mulByConsecutiveCount": [{"key":5, "value":250}, {"key":4, "value":100}, {"key":3, "value":50}]
               },
               {
                      "identifyNum": 8,
-                     "path": "assets/8.png"
+                     "path": "assets/8.png",
+                     "mulByConsecutiveCount": [{"key":5, "value":200}, {"key":4, "value":75}, {"key":3, "value":20}]
               },
               {
                      "identifyNum": 9,
-                     "path": "assets/9.png"
+                     "path": "assets/9.png",
+                     "mulByConsecutiveCount": [{"key":5, "value":200}, {"key":4, "value":75}, {"key":3, "value":20}]
               },
               {
                      "identifyNum": 10,
-                     "path": "assets/10.png"
+                     "path": "assets/10.png",
+                     "mulByConsecutiveCount": [{"key":5, "value":150}, {"key":4, "value":50}, {"key":3, "value":15}]
               },
               {
                      "identifyNum": 11,
-                     "path": "assets/11.png"
+                     "path": "assets/11.png",
+                     "mulByConsecutiveCount": [{"key":5, "value":150}, {"key":4, "value":50}, {"key":3, "value":15}]
               },
               {
                      "identifyNum": 12,
-                     "path": "assets/12.png"
+                     "path": "assets/12.png",
+                     "mulByConsecutiveCount": [{"key":5, "value":150}, {"key":4, "value":50}, {"key":3, "value":15}]
               },
               {
                      "identifyNum": 13,
-                     "path": "assets/13.png"
+                     "path": "assets/13.png",
+                     "mulByConsecutiveCount": [{"key":5, "value":150}, {"key":4, "value":50}, {"key":3, "value":15}]
               }
        ],
 

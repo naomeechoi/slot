@@ -10,25 +10,58 @@ const WILD_CARD_STR: RegExp = /\/0\.png$/;
 class CSymbolInfo {
     private readonly uniqueNum: number;
     private readonly imgPath: string;
+    private readonly mulByConsecutiveCountMap: Map<number, number> = new Map;
     private texture!: any;
 
-    constructor(uniqueNum_: number, imgPath_: string) {
+    constructor(uniqueNum_: number, imgPath_: string, rewards_: {key: number, value: number}[]) {
         this.uniqueNum = uniqueNum_;
         this.imgPath = imgPath_;
+        rewards_.forEach(ele => {
+            this.mulByConsecutiveCountMap.set(ele.key, ele.value);
+        })
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // 심볼의 텍스쳐 로드
+    ///////////////////////////////////////////////////////////////////////////
     public async loadTexture(): Promise<void> {
         this.texture = await Assets.loader.load(this.imgPath);
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // 심볼의 고유 숫자
+    ///////////////////////////////////////////////////////////////////////////
     public getUniqueNum(): number {
         return this.uniqueNum;
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // 심볼의 이미지 경로
+    ///////////////////////////////////////////////////////////////////////////
     public getImgPath(): string {
         return this.imgPath;
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // 심볼 이미지의 연속된 갯수에 따라 결과 값에 곱해줘야 할 값
+    ///////////////////////////////////////////////////////////////////////////
+    public getMultiplier(consecutiveNum_: number): number {
+        const NO_MULTIPLIER = 0;
+        if(this.mulByConsecutiveCountMap == null) {
+            return NO_MULTIPLIER;
+        }
+
+        const tempMultiplier = this.mulByConsecutiveCountMap.get(consecutiveNum_);
+        if(tempMultiplier != null) {
+            return tempMultiplier;
+        }
+        
+        return NO_MULTIPLIER;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // 심볼 텍스쳐
+    ///////////////////////////////////////////////////////////////////////////
     public getTexture(): Texture {
         return this.texture;
     }
@@ -45,9 +78,9 @@ export default class CSymbolManager {
     private wildEffectFrames: Texture[] = [];
     private wildAnimatedSprites: AnimatedSprite[] = [];
 
-    constructor(symbolInfo_: {identifyNum: number, path: string}[], sequenceInfo_: {stop: Array<number>}[], defaultSymbolsPos_: {x: number, y: number}[][]) {
+    constructor(symbolInfo_: {identifyNum: number, path: string, mulByConsecutiveCount: {key: number, value: number}[]}[], sequenceInfo_: {stop: Array<number>}[], defaultSymbolsPos_: {x: number, y: number}[][]) {
         for(const symbol of symbolInfo_){
-            const tempSymbolInfo = new CSymbolInfo(symbol.identifyNum, symbol.path);
+            const tempSymbolInfo = new CSymbolInfo(symbol.identifyNum, symbol.path, symbol.mulByConsecutiveCount);
             this.symbolInfo.push(tempSymbolInfo);
         }
 
@@ -65,7 +98,7 @@ export default class CSymbolManager {
     ///////////////////////////////////////////////////////////////////////////
     // 싱글톤 패턴, 하나의 인스턴스만 보장
     ///////////////////////////////////////////////////////////////////////////
-    public static getInstance(symbolInfo_: {identifyNum: number, path: string}[], sequenceInfo_: {stop: Array<number>}[], defaultSymbolsPos_: {x: number, y: number}[][]): CSymbolManager {
+    public static getInstance(symbolInfo_: {identifyNum: number, path: string, mulByConsecutiveCount: {key: number, value: number}[]}[], sequenceInfo_: {stop: Array<number>}[], defaultSymbolsPos_: {x: number, y: number}[][]): CSymbolManager {
         if(this.instance == null) {
             this.instance = new CSymbolManager(symbolInfo_, sequenceInfo_, defaultSymbolsPos_);
         }
@@ -159,7 +192,7 @@ export default class CSymbolManager {
     ///////////////////////////////////////////////////////////////////////////
     // 와일드 카드인지 확인
     ///////////////////////////////////////////////////////////////////////////
-    public isWildCard(value_: number | string | undefined): boolean {
+    public isWildSymbol(value_: number | string | undefined): boolean {
         switch(typeof value_) {
             case "number": {
                 if(value_ == WILD_CARD_NUM) {
@@ -178,6 +211,18 @@ export default class CSymbolManager {
                 return false;
             }
             break;
+        }
+
+        return false;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // 스케터 심볼인지 확인
+    ///////////////////////////////////////////////////////////////////////////
+    public isScatterSymbol(symbolUniqueNum_: number) {
+        const SCATTERS = 1 | 2 | 3;
+        if(symbolUniqueNum_ == SCATTERS) {
+            return true;
         }
 
         return false;
@@ -211,4 +256,22 @@ export default class CSymbolManager {
         }
     }
 
+    ///////////////////////////////////////////////////////////////////////////////
+    // 몇 배로 보상해줘야 하는지 심볼 유니크 번호로 찾기
+    ///////////////////////////////////////////////////////////////////////////////
+    public getRewardMultiplierBySymbolUniqueNum(symbolUniqueNum_: number, consecutiveCount_: number): number {
+        return this.symbolInfo[symbolUniqueNum_].getMultiplier(consecutiveCount_);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // 몇 배로 보상해줘야 하는지 심볼 텍스쳐로 찾기
+    ///////////////////////////////////////////////////////////////////////////////
+    public getRewardMultiplierBySymbolTexture(symbolTexture_: Texture, consecutiveCount_: number): number {
+        const uniqueNum = this.getSymbolUniqueNumByTexture(symbolTexture_);
+        if(uniqueNum != null) {
+            return this.symbolInfo[uniqueNum].getMultiplier(consecutiveCount_);
+        }
+
+        return 0;
+    }
 }

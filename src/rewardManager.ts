@@ -165,7 +165,7 @@ export default class CRewardManager {
         }
 
         const PREV_SYMBOL_NOT_DECIDED = -1;
-        const MORE_THAN_ONE = 1;
+        const NO_MULTIPLIER = 0;
 
         this.oneLineCredit = this.totalBetArray[this.totalBetCurIdx] / 125;
 
@@ -189,7 +189,9 @@ export default class CRewardManager {
                     matchedSpriteArray.push(symbolSpritesArray_[lineElement]);
                 }
                 else {
-                    if(SYMBOL_MANAGER.isWildCard(symbolUniqueNum)) {
+                    // 스케터 심볼은 와일드 심볼로 대체할 수 없다
+                    if(SYMBOL_MANAGER.isWildSymbol(symbolUniqueNum)
+                    && !SYMBOL_MANAGER.isScatterSymbol(prevSymbolUniqueNum)) {
                         matchedSpriteArray.push(symbolSpritesArray_[lineElement]);
                     } else {
                         break;
@@ -197,7 +199,9 @@ export default class CRewardManager {
                 }
             }
 
-            if(matchedSpriteArray.length > MORE_THAN_ONE) {
+            // 보상에 곱해줄 값이 있는지 확인한다.
+            const multiplier = SYMBOL_MANAGER.getRewardMultiplierBySymbolUniqueNum(prevSymbolUniqueNum, matchedSpriteArray.length);
+            if(multiplier > NO_MULTIPLIER) {
                 this.matchedLines.push(payLine);
                 this.matchedSprites.push(matchedSpriteArray);
             }
@@ -262,7 +266,7 @@ export default class CRewardManager {
 
             // 라인 윈 페이 텍스트 그리기
             let style = new TextStyle({fontSize: 12, fill: RANDOM_COLOR});
-            let oneLineWinPay = this.oneLineCredit * 100;
+            let oneLineWinPay = this.oneLineCredit * SYMBOL_MANAGER.getRewardMultiplierBySymbolTexture(this.matchedSprites[i][0].texture, this.matchedSprites[i].length);
             let textContent: string = "Line Win Pays: " + oneLineWinPay;
             let tempText = new Text({x: 150, y:555, zIndex:Z_FRONT, text: textContent, style});
             tempText.visible = false;
@@ -373,8 +377,9 @@ export default class CRewardManager {
                 this.setGraphicsOrTextVisible(this.rectGraphics, false, visibleLineIdx_);
                 this.setGraphicsOrTextVisible(this.lineWinTexts, false, visibleLineIdx_);
 
+                // 와일드 심볼일 경우 이펙트를 틀어준다.
                 for(let symbolSprite of this.matchedSprites[visibleLineIdx_]) {
-                    if(SYMBOL_MANAGER.isWildCard(symbolSprite.texture.label)) {
+                    if(SYMBOL_MANAGER.isWildSymbol(symbolSprite.texture.label)) {
                         SYMBOL_MANAGER.createWildEffect(symbolSprite.x, symbolSprite.y);
                     }
                 }
@@ -406,7 +411,8 @@ export default class CRewardManager {
         }
 
         for(let symbolSprite of this.matchedSprites[blinkAttr_.line]) {
-            if(SYMBOL_MANAGER.isWildCard(symbolSprite.texture.label)) {
+            //와일드 카드일 경우 깜박거리지 않는다.
+            if(SYMBOL_MANAGER.isWildSymbol(symbolSprite.texture.label)) {
                 continue;
             }
             symbolSprite.visible = blinkAttr_.visible;
