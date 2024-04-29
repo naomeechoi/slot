@@ -147,7 +147,7 @@ export default class CReel {
     ///////////////////////////////////////////////////////////////////////////
     private moveSymbolByTweenMaxRecursion(symbol_: CSymbol): void {
         const THUD_VISUAL_EFFECT = 50;
-        const THUD_EFFECT_DELAY = 0.04;
+        const THUD_EFFECT_DELAY = 0.015;
         const MAX_Y_POS = 552;
         // 스핀 스탑할 때 텅하는 효과, 재귀 종료
 

@@ -214,7 +214,9 @@ export default class CRewardManager {
     ///////////////////////////////////////////////////////////////////////////
     private drawResult(): void {
         if(this.matchedLines.length == 0) {
-            this.bFinishedCheckResult = true;
+            setTimeout(() => {
+                this.bFinishedCheckResult = true;
+            }, 500);
             return;
         }
 
@@ -311,7 +313,7 @@ export default class CRewardManager {
             count--;
         }
         
-        return SHOW_LINE_TIME * 2 + count * SHOW_LINE_TIME;
+        return SHOW_LINE_TIME * 2.5 + count * SHOW_LINE_TIME;
     }
 
     ///////////////////////////////////////////////////////////////////////////
