@@ -147,13 +147,11 @@ export default class CSlot {
             }
         }
 
-        if(REWARD_MANAGER.isFinishedCheckResult()) {
+        if(REWARD_MANAGER.isFinishChecking()) {
             this.bCanStart = true;
 
             if(this.bAuto) {
-                setTimeout(() => {
-                    this.startGame();
-                }, REWARD_MANAGER.getShowLInesTime());
+                this.startGame();
             } else {
                 this.startButton.cursor = 'pointer';
                 this.startButton.tint = 0xffef55;

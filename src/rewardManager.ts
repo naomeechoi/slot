@@ -1,4 +1,4 @@
-import { Sprite, Graphics, TextStyle, Text, textureBit } from 'pixi.js';
+import { Sprite, Graphics, TextStyle, Text, Texture } from 'pixi.js';
 import { TweenMax } from 'gsap/TweenMax';
 import { APP, SYMBOL_MANAGER } from './singleton';
 
@@ -165,13 +165,12 @@ export default class CRewardManager {
         }
 
         const PREV_SYMBOL_NOT_DECIDED = -1;
-        const ZERO_CONSECUTIVE = 0;
+        const MORE_THAN_ONE = 1;
 
         this.oneLineCredit = this.totalBetArray[this.totalBetCurIdx] / 125;
 
         for(const payLine of this.payLines) {
             let prevSymbolUniqueNum: number = PREV_SYMBOL_NOT_DECIDED;
-            let consecutiveSymbolCount: number = ZERO_CONSECUTIVE;
             let matchedSpriteArray: Sprite[] = [];
 
             for(const lineElement of payLine) {
@@ -188,14 +187,17 @@ export default class CRewardManager {
 
                 if(prevSymbolUniqueNum == symbolUniqueNum) {
                     matchedSpriteArray.push(symbolSpritesArray_[lineElement]);
-                    consecutiveSymbolCount++;
                 }
                 else {
-                    break;
+                    if(SYMBOL_MANAGER.isWildCard(symbolUniqueNum)) {
+                        matchedSpriteArray.push(symbolSpritesArray_[lineElement]);
+                    } else {
+                        break;
+                    }
                 }
             }
 
-            if(consecutiveSymbolCount > ZERO_CONSECUTIVE) {
+            if(matchedSpriteArray.length > MORE_THAN_ONE) {
                 this.matchedLines.push(payLine);
                 this.matchedSprites.push(matchedSpriteArray);
             }
@@ -277,7 +279,7 @@ export default class CRewardManager {
         }, onComplete: () => {       
             setTimeout(() => {
             this.bFinishedCheckResult = true;
-        }, 300);}});
+        }, this.getShowLInesTime());}});
 
         // 라인 하나씩 보여주기 위해서 준비
         setTimeout(() => {
@@ -288,8 +290,12 @@ export default class CRewardManager {
     ///////////////////////////////////////////////////////////////////////////
     // 돈 올리는 것까지 전부 끝났는지 확인
     ///////////////////////////////////////////////////////////////////////////
-    public isFinishedCheckResult() {
-        return this.bFinishedCheckResult;
+    public isFinishChecking(): boolean {
+        if(this.bFinishedCheckResult == true) {
+            this.bFinishedCheckResult = false;
+            return true;
+        }
+        return false;
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -300,6 +306,7 @@ export default class CRewardManager {
         if(this.matchedLines.length != 0) {
             count--;
         }
+        
         return SHOW_LINE_TIME * 2 + count * SHOW_LINE_TIME;
     }
 
@@ -349,6 +356,8 @@ export default class CRewardManager {
         this.setGraphicsOrTextVisible(this.rectGraphics, false);
         this.setGraphicsOrTextVisible(this.lineWinTexts, false);
 
+        SYMBOL_MANAGER.deleteWildEffect();
+
         // 보여질 라인에 대한 처리
         if(visibleLineIdx_ >= this.lineGraphics.length) {
             visibleLineIdx_ = -1;
@@ -363,6 +372,12 @@ export default class CRewardManager {
                 this.setGraphicsOrTextVisible(this.lineGraphics, false, visibleLineIdx_);
                 this.setGraphicsOrTextVisible(this.rectGraphics, false, visibleLineIdx_);
                 this.setGraphicsOrTextVisible(this.lineWinTexts, false, visibleLineIdx_);
+
+                for(let symbolSprite of this.matchedSprites[visibleLineIdx_]) {
+                    if(SYMBOL_MANAGER.isWildCard(symbolSprite.texture.label)) {
+                        SYMBOL_MANAGER.createWildEffect(symbolSprite.x, symbolSprite.y);
+                    }
+                }
 
                 let blinkAtt: {line: number, visible: boolean, count: number} = {line:visibleLineIdx_, visible: true, count: 0};
                 this.curVisibleLine = visibleLineIdx_;
@@ -391,6 +406,9 @@ export default class CRewardManager {
         }
 
         for(let symbolSprite of this.matchedSprites[blinkAttr_.line]) {
+            if(SYMBOL_MANAGER.isWildCard(symbolSprite.texture.label)) {
+                continue;
+            }
             symbolSprite.visible = blinkAttr_.visible;
         }
 
@@ -432,6 +450,8 @@ export default class CRewardManager {
         this.winText.visible = false;
         this.winText.text = 0;
         this.bFinishedCheckResult = false;
+
+        SYMBOL_MANAGER.deleteWildEffect();
     }
 
     ///////////////////////////////////////////////////////////////////////////

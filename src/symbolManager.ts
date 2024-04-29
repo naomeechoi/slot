@@ -1,4 +1,8 @@
-import { Assets, Texture } from "pixi.js";
+import { Assets, Rectangle, Texture, AnimatedSprite } from "pixi.js";
+import { APP } from "./singleton";
+
+const WILD_CARD_NUM: number = 0;
+const WILD_CARD_STR: RegExp = /\/0\.png$/;
 
 ///////////////////////////////////////////////////////////////////////////////
 // 총 14개의 심볼 정보들
@@ -37,6 +41,10 @@ export default class CSymbolManager {
     private readonly symbolSequence: number[][] = [];
     private readonly defaultSymbolsPos: {x: number, y: number}[][] = [];
 
+    // 와일드 카드 효과 관련
+    private wildEffectFrames: Texture[] = [];
+    private wildAnimatedSprites: AnimatedSprite[] = [];
+
     constructor(symbolInfo_: {identifyNum: number, path: string}[], sequenceInfo_: {stop: Array<number>}[], defaultSymbolsPos_: {x: number, y: number}[][]) {
         for(const symbol of symbolInfo_){
             const tempSymbolInfo = new CSymbolInfo(symbol.identifyNum, symbol.path);
@@ -68,9 +76,22 @@ export default class CSymbolManager {
     ///////////////////////////////////////////////////////////////////////////////
     // 텍스쳐들을 로드한다.
     ///////////////////////////////////////////////////////////////////////////////
-    public async loadTextures(): Promise<void> {
+    public async loadTextures(effectSpriteSheetPath_: string): Promise<void> {
         for(const symbol of this.symbolInfo){
             await symbol.loadTexture();
+        }
+
+        const spriteSheet = await Assets.loader.load(effectSpriteSheetPath_);
+        const SPRITE_IMG_NUM = 25;
+        const COL = 5;
+        const ROW = 5;
+        const WIDTH = 190.6;
+        const HEIGHT = 185.8;
+        for(let i = 0; i < SPRITE_IMG_NUM; i++) {
+            const x = (i % COL) * WIDTH;
+            const y = Math.floor(i / ROW) * HEIGHT;
+            const tempTexture = new Texture({source: spriteSheet, frame: new Rectangle(x, y, WIDTH, 185.8)});
+            this.wildEffectFrames.push(tempTexture);
         }
     }
 
@@ -134,4 +155,60 @@ export default class CSymbolManager {
     public getDefaultSymbolsPos(): {x: number, y: number}[][] {
         return this.defaultSymbolsPos;
     }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // 와일드 카드인지 확인
+    ///////////////////////////////////////////////////////////////////////////
+    public isWildCard(value_: number | string | undefined): boolean {
+        switch(typeof value_) {
+            case "number": {
+                if(value_ == WILD_CARD_NUM) {
+                    return true;
+                }
+            } break;
+            case "string": {
+                if(value_.match(WILD_CARD_STR)) {
+                    return true;
+                }
+            } break;
+            case "undefined": {
+                return false;
+            } break;
+            default: {
+                return false;
+            }
+            break;
+        }
+
+        return false;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // 와일드 카드 이펙트 생성
+    ///////////////////////////////////////////////////////////////////////////////
+    public createWildEffect(x_: number, y_:number): void {
+        let wildEffect = new AnimatedSprite(this.wildEffectFrames);
+        wildEffect.position.set(x_, y_);
+        wildEffect.width = 140;
+        wildEffect.height = 120;
+        wildEffect.animationSpeed = 0.5;
+        wildEffect.loop = true;
+        wildEffect.zIndex = 2;
+        wildEffect.anchor.set(0.1);
+        wildEffect.alpha = 0.8;
+        wildEffect.play();
+
+        this.wildAnimatedSprites.push(wildEffect);
+        APP.stage.addChild(wildEffect);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // 와일드 카드 이펙트 삭제
+    ///////////////////////////////////////////////////////////////////////////////
+    public deleteWildEffect(): void {
+        for(const animatedSprite of this.wildAnimatedSprites) {
+            APP.stage.removeChild(animatedSprite);
+        }
+    }
+
 }
