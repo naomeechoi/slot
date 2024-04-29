@@ -206,7 +206,18 @@ export default class CRewardManager {
                 this.matchedSprites.push(matchedSpriteArray);
             }
         }
-        this.drawResult();
+
+        // 매치된 라인 없으면 끝낼 것 예약하고 있으면 선 그려준다.
+        // 0.1초 뒤에 그리는 이유는 가장 마지막 라인의 사각형 위치를 정확하게 잡기 위해서이다.
+        if(this.matchedLines.length == 0) {
+            setTimeout(() => {
+                this.bFinishedCheckResult = true;
+            }, 500);
+        } else {
+            setTimeout(() => {
+                this.drawResult();
+            }, 100);
+        }
     }
     
     ///////////////////////////////////////////////////////////////////////////
