@@ -1,6 +1,6 @@
 import { Sprite } from "pixi.js";
 import { TweenMax } from 'gsap/TweenMax';
-import { APP, SYMBOL_MANAGER } from "./singleton"
+import { APP, SYMBOL_MANAGER, UTIL } from "./singleton"
 
 const Y_POS_GAP = 108;
 const WAIT_FOR_STOP_SIGN = -1;
@@ -37,6 +37,7 @@ export default class CReel {
     private bPrevReelPermission: boolean = false;
     private bSelfPermission: boolean = false;
     private symbolsOnScreenMap: Map<number, Sprite> = new Map;
+    private tweenMaxArray: TweenMax[] = [];
     
     constructor(reelIdx_: number) {
         this.reelIdx = reelIdx_;
@@ -87,6 +88,7 @@ export default class CReel {
         this.bSelfPermission = false;
 
         this.symbolsOnScreenMap.clear();
+        UTIL.killTweenMax(this.tweenMaxArray);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -152,7 +154,7 @@ export default class CReel {
         // 스핀 스탑할 때 텅하는 효과, 재귀 종료
 
             // 재귀 호출로 이미지 이동 및 변경
-        TweenMax.to(symbol_.sprite, this.spinningSpeed, { y: symbol_.sprite.y + Y_POS_GAP, onComplete: () => {
+        const recursiveTween = TweenMax.to(symbol_.sprite, this.spinningSpeed, { ease: "none", y: symbol_.sprite.y + Y_POS_GAP, onComplete: () => {
             
             symbol_.originalIdx++;
             if(symbol_.originalIdx >= this.symbolPool.length) {
@@ -161,17 +163,19 @@ export default class CReel {
 
             if(this.bSpinning == false) {
                 // 쿵하는 효과를 주기 위해 조금 더 아래로 내린다.
-                TweenMax.to(symbol_.sprite, this.spinningSpeed, { y: MAX_Y_POS - Y_POS_GAP * (symbol_.originalIdx) + THUD_VISUAL_EFFECT, onComplete: () => {
-
-                    // 스크린에 보여줘야할 심볼이면 symbolsOnScreenMap에 담아둔다.
-                    // symbolsOnScreenMap은 페이라인을 판단하는데 쓰인다.
-                    if(this.isSymbolOnScreen(symbol_.originalIdx)) {
-                        this.symbolsOnScreenMap.set(SYMBOLS_ON_SCREEN_LENGTH - symbol_.originalIdx, symbol_.sprite);
-                    }
-
+                const readyToStopTween = TweenMax.to(symbol_.sprite, this.spinningSpeed, { ease: "none", y: MAX_Y_POS - Y_POS_GAP * (symbol_.originalIdx) + THUD_VISUAL_EFFECT, onComplete: () => {
                     // 다시 제자리로 올라온다.
-                    TweenMax.to(symbol_.sprite, MAX_SPINNING_SPEED, { y: symbol_.sprite.y - THUD_VISUAL_EFFECT, delay: THUD_EFFECT_DELAY})
+                    const stopTween = TweenMax.to(symbol_.sprite, MAX_SPINNING_SPEED, { ease: "none", y: symbol_.sprite.y - THUD_VISUAL_EFFECT, delay: THUD_EFFECT_DELAY, onComplete: () => {
+                        // 스크린에 보여줘야할 심볼이면 symbolsOnScreenMap에 담아둔다.
+                        // symbolsOnScreenMap은 페이라인을 판단하는데 쓰인다.
+                        if(this.isSymbolOnScreen(symbol_.originalIdx)) {
+                            this.symbolsOnScreenMap.set(SYMBOLS_ON_SCREEN_LENGTH - symbol_.originalIdx, symbol_.sprite);
+                        }
+                    }})
+
+                    this.tweenMaxArray.push(stopTween);
                 }});
+                this.tweenMaxArray.push(readyToStopTween);
                 return;
             }
             else {
@@ -181,6 +185,7 @@ export default class CReel {
             }
         }})
         
+        this.tweenMaxArray.push(recursiveTween);
     }
 
     ///////////////////////////////////////////////////////////////////////////

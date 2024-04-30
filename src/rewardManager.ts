@@ -1,6 +1,6 @@
 import { Sprite, Graphics, TextStyle, Text, Texture } from 'pixi.js';
 import { TweenMax } from 'gsap/TweenMax';
-import { APP, SYMBOL_MANAGER } from './singleton';
+import { APP, SYMBOL_MANAGER, UTIL } from './singleton';
 
 const SHOW_LINE_TIME = 800;
 const WHOLE_LINES_VISIBLE = -1;
@@ -41,6 +41,8 @@ export default class CRewardManager {
     // 결과 체크 끝났는 지
     private bFinishedCheckResult: boolean = false;
 
+    private timeoutArray: NodeJS.Timeout[] = [];
+
     private constructor(payLines_: {line: number[]}[], totalBet_: number[]) {
         for(let i = 0; i < payLines_.length; i++){
             const curLine = payLines_[i];
@@ -65,7 +67,7 @@ export default class CRewardManager {
 
         // 전체 베팅 금액 텍스트 셋팅
         style = new TextStyle({fontSize: 22, fill: '#ffffff'});
-        this.totalBetText = new Text({x: 207, y:631, zIndex:2, text: this.addDollarSignAndCommaToNumber(this.totalBetArray[this.totalBetCurIdx]), style});
+        this.totalBetText = new Text({x: 207, y:631, zIndex:2, text: UTIL.addDollarSignAndCommaToNumber(this.totalBetArray[this.totalBetCurIdx]), style});
         this.totalBetText.anchor.set(0.5);
         APP.stage.addChild(this.totalBetText);
 
@@ -133,7 +135,7 @@ export default class CRewardManager {
         if(this.totalBetCurIdx > 0) {
             this.totalBetCurIdx--;
             this.totalBetLeftButton.cursor = 'pointer';
-            this.totalBetText.text = this.addDollarSignAndCommaToNumber(this.totalBetArray[this.totalBetCurIdx]);
+            this.totalBetText.text = UTIL.addDollarSignAndCommaToNumber(this.totalBetArray[this.totalBetCurIdx]);
         }
 
         this.ControlTotalBetButtonCursor();
@@ -150,7 +152,7 @@ export default class CRewardManager {
         if(this.totalBetCurIdx < this.totalBetArray.length - 1) {
             this.totalBetCurIdx++;
             this.totalBetRightButton.cursor = 'pointer';
-            this.totalBetText.text = this.addDollarSignAndCommaToNumber(this.totalBetArray[this.totalBetCurIdx]);
+            this.totalBetText.text = UTIL.addDollarSignAndCommaToNumber(this.totalBetArray[this.totalBetCurIdx]);
         }
 
         this.ControlTotalBetButtonCursor();
@@ -208,15 +210,14 @@ export default class CRewardManager {
         }
 
         // 매치된 라인 없으면 끝낼 것 예약하고 있으면 선 그려준다.
-        // 0.1초 뒤에 그리는 이유는 가장 마지막 라인의 사각형 위치를 정확하게 잡기 위해서이다.
         if(this.matchedLines.length == 0) {
-            setTimeout(() => {
+            const finishTimeout = setTimeout(() => {
                 this.bFinishedCheckResult = true;
             }, 500);
+
+            this.timeoutArray.push(finishTimeout);
         } else {
-            setTimeout(() => {
-                this.drawResult();
-            }, 100);
+            this.drawResult();
         }
     }
     
@@ -224,13 +225,6 @@ export default class CRewardManager {
     // 맞춰진 라인, 사각형, 이긴 금액을 그린다.
     ///////////////////////////////////////////////////////////////////////////
     private drawResult(): void {
-        if(this.matchedLines.length == 0) {
-            setTimeout(() => {
-                this.bFinishedCheckResult = true;
-            }, 500);
-            return;
-        }
-
         const X_START = 208;
         const Y_START = 120;
         const WIDTH = 128;
@@ -292,16 +286,19 @@ export default class CRewardManager {
         // 총합 윈 텍스트
         this.winText.visible = true;
         TweenMax.to(this.winText, 1, {text: this.win, onUpdate: () => {
-            this.winText.text = this.addDollarSignAndCommaToNumber(parseInt(this.winText.text));
+            this.winText.text = UTIL.addDollarSignAndCommaToNumber(parseInt(this.winText.text));
         }, onComplete: () => {       
-            setTimeout(() => {
+            const finishTimeout = setTimeout(() => {
             this.bFinishedCheckResult = true;
-        }, this.getShowLInesTime());}});
+        }, this.getShowLInesTime());
+        this.timeoutArray.push(finishTimeout);
+    }});
 
         // 라인 하나씩 보여주기 위해서 준비
-        setTimeout(() => {
+        const showLineOneByOneTimeout = setTimeout(() => {
             this.showLinesAndRectsOneByOne(0);
         }, SHOW_LINE_TIME * 2);
+        this.timeoutArray.push(showLineOneByOneTimeout);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -403,10 +400,11 @@ export default class CRewardManager {
             }
         }
 
-        setTimeout(() => {
+        const showLineOneByOneTimeout = setTimeout(() => {
             visibleLineIdx_++;
             this.showLinesAndRectsOneByOne(visibleLineIdx_);
         }, SHOW_LINE_TIME);
+        this.timeoutArray.push(showLineOneByOneTimeout);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -434,9 +432,10 @@ export default class CRewardManager {
         if(blinkAttr_.count < BLINK_COUNT) {
             blinkAttr_.count++;
             blinkAttr_.visible = !blinkAttr_.visible;
-            setTimeout(() => {
+            const blinkTimeout = setTimeout(() => {
                 this.blinkSymbols(blinkAttr_);
             }, SHOW_LINE_TIME / BLINK_COUNT);
+            this.timeoutArray.push(blinkTimeout);
         }
     }
 
@@ -471,48 +470,7 @@ export default class CRewardManager {
         this.bFinishedCheckResult = false;
 
         SYMBOL_MANAGER.deleteWildEffect();
-    }
 
-    ///////////////////////////////////////////////////////////////////////////
-    // 돈 표시에 달러 사인, 콤마 추가 하기
-    ///////////////////////////////////////////////////////////////////////////
-    private addDollarSignAndCommaToNumber(number_: number | string): string {
-        if(typeof number_ == "string") {
-            number_ = parseInt(number_);
-        }
-
-        // 콤마를 몇 개 찍어야 하는지 계산
-        let commaCount: number = 0;
-        let tempNum: number = number_;
-        while(tempNum >= 1000) {
-            commaCount++;
-            tempNum /= 1000;
-        }
-
-        // 찍을 콤마 없다면 리턴
-        if(commaCount == 0) {
-            if(number_ > 0) {
-                return number_.toString();
-            }
-            else {
-                return "";
-            }
-        }
-
-        // 콤마 추가
-        let numberStr = number_.toString();
-        let textParts: string[] = numberStr.split('').reverse();
-        while(commaCount > 0) {
-            textParts.splice(commaCount * 3, 0, ',');
-            commaCount--;
-        }
-        
-        // 달러 표시 달고 배열 합치기
-        let result: string = "$";
-        for(let i = textParts.length - 1; i >= 0; i--) {
-            result += textParts[i];
-        }
-        
-        return result;
+        UTIL.clearTimeout(this.timeoutArray);
     }
 }

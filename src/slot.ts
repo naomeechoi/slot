@@ -1,5 +1,5 @@
 import { Assets, Graphics, Sprite, TextStyle, Text } from "pixi.js";
-import { APP, SYMBOL_MANAGER, REWARD_MANAGER } from "./singleton"
+import { APP, SYMBOL_MANAGER, REWARD_MANAGER, UTIL } from "./singleton"
 import CReel from "./reel"
 const REEL_COUNT = 5;
 const SPIN_TERM = 300;
@@ -14,6 +14,7 @@ export default class CSlot {
     private startButton!: Graphics;
     private autoButton!: Graphics;
     private bAuto: boolean = false;
+    private timeoutArray: NodeJS.Timeout[] = [];
 
     private constructor(){
     }
@@ -166,27 +167,31 @@ export default class CSlot {
         if(this.bCanStart == false) {
             return;
         }
+
+        UTIL.clearTimeout(this.timeoutArray);
         
         this.bCanStart = false;
         this.startButton.cursor = 'default';
         this.startButton.tint = 0x000000;
 
         for(let i = 0; i < REEL_COUNT; i++){
-            setTimeout(() => {
+            const reelSpinTermTimeout = setTimeout(() => {
                 if(this.observerReels[i] == null) {
                     return;
                 }
 
                 this.observerReels[i].start();
             }, i * SPIN_TERM);
+            this.timeoutArray.push(reelSpinTermTimeout);
         }
 
         // SPIN_TIME이 끝난 후, 서버로 메시지 받았다고 가정한다.
         // SPIN_TIME이 끝난 후, 페이라인 체크를 시작한다.
-        setTimeout(() => {
+        const spinTimeTimeout = setTimeout(() => {
             this.receiveMessageFromServer(0);
             this.bStartToCheckPayLines = true;
         }, SPIN_TIME);
+        this.timeoutArray.push(spinTimeTimeout);
 
         // 페이라인 그려진게 있다면 지운다.
         REWARD_MANAGER.clearLines();
@@ -241,13 +246,14 @@ export default class CSlot {
     private stopSpinning(): void {
         const reelStopNumbers = this.randomizeStopNumber(); 
         for(let i = 0; i < REEL_COUNT; i++){
-            setTimeout(() => {
+            const reelStopTermTimeout = setTimeout(() => {
                 if(this.observerReels[i] == null) {
                     return;
                 }
 
                 this.observerReels[i].SetReelStopLocation(reelStopNumbers[i]);
             }, i * SPIN_TERM);
+            this.timeoutArray.push(reelStopTermTimeout);
         }
     }
 
