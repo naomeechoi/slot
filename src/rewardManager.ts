@@ -183,6 +183,12 @@ export default class CRewardManager {
 
                 if(prevSymbolUniqueNum == PREV_SYMBOL_NOT_DECIDED) {
                     prevSymbolUniqueNum = symbolUniqueNum;
+
+                    // 스케터 심볼은 페이라인에 따라가지 않는다.
+                    if(SYMBOL_MANAGER.isScatterSymbol(prevSymbolUniqueNum)) {
+                        continue;
+                    }
+
                     matchedSpriteArray.push(symbolSpritesArray_[lineElement]);
                     continue;
                 }
@@ -370,7 +376,7 @@ export default class CRewardManager {
         this.setGraphicsOrTextVisible(this.rectGraphics, false);
         this.setGraphicsOrTextVisible(this.lineWinTexts, false);
 
-        SYMBOL_MANAGER.deleteWildEffect();
+        SYMBOL_MANAGER.deleteWildOrScatterEffect(true);
 
         // 보여질 라인에 대한 처리
         if(visibleLineIdx_ >= this.lineGraphics.length) {
@@ -386,14 +392,12 @@ export default class CRewardManager {
                 this.setGraphicsOrTextVisible(this.lineGraphics, false, visibleLineIdx_);
                 this.setGraphicsOrTextVisible(this.rectGraphics, false, visibleLineIdx_);
                 this.setGraphicsOrTextVisible(this.lineWinTexts, false, visibleLineIdx_);
-
                 // 와일드 심볼일 경우 이펙트를 틀어준다.
                 for(let symbolSprite of this.matchedSprites[visibleLineIdx_]) {
                     if(SYMBOL_MANAGER.isWildSymbol(symbolSprite.texture.label)) {
-                        SYMBOL_MANAGER.createWildEffect(symbolSprite.x, symbolSprite.y);
+                        SYMBOL_MANAGER.createWildOrScatterEffect(true, symbolSprite.x, symbolSprite.y);
                     }
                 }
-
                 let blinkAtt: {line: number, visible: boolean, count: number} = {line:visibleLineIdx_, visible: true, count: 0};
                 this.curVisibleLine = visibleLineIdx_;
                 this.blinkSymbols(blinkAtt);
@@ -423,7 +427,8 @@ export default class CRewardManager {
 
         for(let symbolSprite of this.matchedSprites[blinkAttr_.line]) {
             //와일드 카드일 경우 깜박거리지 않는다.
-            if(SYMBOL_MANAGER.isWildSymbol(symbolSprite.texture.label)) {
+            if(SYMBOL_MANAGER.isWildSymbol(symbolSprite.texture.label)
+                || SYMBOL_MANAGER.isScatterSymbol(symbolSprite.texture.label)) {
                 continue;
             }
             symbolSprite.visible = blinkAttr_.visible;
@@ -469,7 +474,7 @@ export default class CRewardManager {
         this.winText.text = 0;
         this.bFinishedCheckResult = false;
 
-        SYMBOL_MANAGER.deleteWildEffect();
+        SYMBOL_MANAGER.deleteWildOrScatterEffect(true);
 
         UTIL.clearTimeout(this.timeoutArray);
     }

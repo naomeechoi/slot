@@ -1,9 +1,6 @@
 import { Assets, Rectangle, Texture, AnimatedSprite } from "pixi.js";
 import { APP } from "./singleton";
 
-const WILD_CARD_NUM: number = 0;
-const WILD_CARD_STR: RegExp = /\/0\.png$/;
-
 ///////////////////////////////////////////////////////////////////////////////
 // 총 14개의 심볼 정보들
 ///////////////////////////////////////////////////////////////////////////////
@@ -74,9 +71,13 @@ export default class CSymbolManager {
     private readonly symbolSequence: number[][] = [];
     private readonly defaultSymbolsPos: {x: number, y: number}[][] = [];
 
-    // 와일드 카드 효과 관련
+    // 와일드 심볼 효과 관련
     private wildEffectFrames: Texture[] = [];
     private wildAnimatedSprites: AnimatedSprite[] = [];
+
+    // 스케터 심볼 효과 관련
+    private scatterEffectFrames: Texture[] = [];
+    private scatterAnimatedSprites: AnimatedSprite[] = [];
 
     constructor(symbolInfo_: {identifyNum: number, path: string, mulByConsecutiveCount: {key: number, value: number}[]}[], sequenceInfo_: {stop: Array<number>}[], defaultSymbolsPos_: {x: number, y: number}[][]) {
         for(const symbol of symbolInfo_){
@@ -109,22 +110,30 @@ export default class CSymbolManager {
     ///////////////////////////////////////////////////////////////////////////////
     // 텍스쳐들을 로드한다.
     ///////////////////////////////////////////////////////////////////////////////
-    public async loadTextures(effectSpriteSheetPath_: string): Promise<void> {
+    public async loadTextures(wildSpriteSheetPath_: string, scatterSpriteSheetPath_: string): Promise<void> {
         for(const symbol of this.symbolInfo){
             await symbol.loadTexture();
         }
 
-        const spriteSheet = await Assets.loader.load(effectSpriteSheetPath_);
+        const wildSpriteSheet = await Assets.loader.load(wildSpriteSheetPath_);
         const SPRITE_IMG_NUM = 25;
         const COL = 5;
         const ROW = 5;
-        const WIDTH = 190.6;
-        const HEIGHT = 185.8;
+        const WIDTH = 192;
+        const HEIGHT = 192;
         for(let i = 0; i < SPRITE_IMG_NUM; i++) {
             const x = (i % COL) * WIDTH;
             const y = Math.floor(i / ROW) * HEIGHT;
-            const tempTexture = new Texture({source: spriteSheet, frame: new Rectangle(x, y, WIDTH, 185.8)});
+            const tempTexture = new Texture({source: wildSpriteSheet, frame: new Rectangle(x, y, WIDTH, HEIGHT)});
             this.wildEffectFrames.push(tempTexture);
+        }
+
+        const scatterSpriteSheet = await Assets.loader.load(scatterSpriteSheetPath_);
+        for(let i = 0; i < SPRITE_IMG_NUM; i++) {
+            const x = (i % COL) * WIDTH;
+            const y = Math.floor(i / ROW) * HEIGHT;
+            const tempTexture = new Texture({source: scatterSpriteSheet, frame: new Rectangle(x, y, WIDTH, HEIGHT)});
+            this.scatterEffectFrames.push(tempTexture);
         }
     }
 
@@ -195,12 +204,14 @@ export default class CSymbolManager {
     public isWildSymbol(value_: number | string | undefined): boolean {
         switch(typeof value_) {
             case "number": {
-                if(value_ == WILD_CARD_NUM) {
+                const WILD_NUM: number = 0;
+                if(value_ == WILD_NUM) {
                     return true;
                 }
             } break;
             case "string": {
-                if(value_.match(WILD_CARD_STR)) {
+                const WILD_STR: RegExp = /\/0\.png$/;
+                if(value_.match(WILD_STR)) {
                     return true;
                 }
             } break;
@@ -219,39 +230,86 @@ export default class CSymbolManager {
     ///////////////////////////////////////////////////////////////////////////
     // 스케터 심볼인지 확인
     ///////////////////////////////////////////////////////////////////////////
-    public isScatterSymbol(symbolUniqueNum_: number) {
-        const SCATTERS = 1 | 2 | 3;
-        if(symbolUniqueNum_ == SCATTERS) {
-            return true;
+    public isScatterSymbol(value_: number | string | undefined) {
+        switch(typeof value_) {
+            case "number": {
+                const SCATTERS = 1 | 2 | 3;
+                if(value_ == SCATTERS) {
+                    return true;
+                }
+            } break;
+            case "string": {
+                const SCATTERS_STR_1: RegExp = /\/1\.png$/;
+                const SCATTERS_STR_2: RegExp = /\/2\.png$/;
+                const SCATTERS_STR_3: RegExp = /\/3\.png$/;
+                if(value_.match(SCATTERS_STR_1)
+                    || value_.match(SCATTERS_STR_2)
+                    || value_.match(SCATTERS_STR_3)) {
+                    return true;
+                }
+            } break;
+            case "undefined": {
+                return false;
+            } break;
+            default: {
+                return false;
+            }
+            break;
         }
 
         return false;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
-    // 와일드 카드 이펙트 생성
+    // 심볼 이펙트 생성
     ///////////////////////////////////////////////////////////////////////////////
-    public createWildEffect(x_: number, y_:number): void {
-        let wildEffect = new AnimatedSprite(this.wildEffectFrames);
-        wildEffect.position.set(x_, y_);
-        wildEffect.width = 140;
-        wildEffect.height = 120;
-        wildEffect.animationSpeed = 0.5;
-        wildEffect.loop = true;
-        wildEffect.zIndex = 2;
-        wildEffect.anchor.set(0.1);
-        wildEffect.alpha = 0.8;
-        wildEffect.play();
+    public createWildOrScatterEffect(isWildEffect_: boolean, x_: number, y_:number): void {
+        let effect;
+        let offsetX;
+        let offsetY;
+        let width;
+        let height;
+        let zIndex;
+        if(isWildEffect_) {
+            effect = new AnimatedSprite(this.wildEffectFrames);
+            offsetX = -10;
+            offsetY = -15;
+            width = 140;
+            height = 120;
+            zIndex = 0;
+        } else {
+            effect = new AnimatedSprite(this.scatterEffectFrames);
+            offsetX = -40;
+            offsetY = -40;
+            width = 200;
+            height = 180;
+            zIndex = 2;       
+        }
 
-        this.wildAnimatedSprites.push(wildEffect);
-        APP.stage.addChild(wildEffect);
+        effect.position.set(x_ + offsetX, y_ + offsetY);
+        effect.width = width;
+        effect.height = height;
+        effect.zIndex = zIndex;
+        effect.animationSpeed = 0.45;
+        effect.loop = true;
+        effect.play();
+    
+        this.wildAnimatedSprites.push(effect);
+        APP.stage.addChild(effect);
     }
 
     ///////////////////////////////////////////////////////////////////////////////
-    // 와일드 카드 이펙트 삭제
+    // 심볼 이펙트 삭제
     ///////////////////////////////////////////////////////////////////////////////
-    public deleteWildEffect(): void {
-        for(const animatedSprite of this.wildAnimatedSprites) {
+    public deleteWildOrScatterEffect(isWildEffect_: boolean): void {
+        let animatedSprites;
+        if(isWildEffect_) {
+            animatedSprites = this.wildAnimatedSprites;
+        } else {
+            animatedSprites = this.scatterAnimatedSprites;
+        }
+
+        for(const animatedSprite of animatedSprites) {
             APP.stage.removeChild(animatedSprite);
         }
     }

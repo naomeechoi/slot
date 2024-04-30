@@ -1,5 +1,8 @@
 {
-       "WildEffect": "assets/effect1.png",
+       "WildEffect": "assets/wildEffect.png",
+       "ScatterEffect": "assets/scatterEffect.png",
+       
+       "ScatterCombination": [{"key":3, "value":100}, {"key":4, "value":400}, {"key":5, "value":1000}],
 
        "SymbolInfo":[
               {

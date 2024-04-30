@@ -88,4 +88,4 @@ CSingleton.rewardManager = CRewardManager.getInstance(JSON_OBJECT["PayLines"], J
 export const SYMBOL_MANAGER = CSingleton.symbolManager;
 export const REWARD_MANAGER = CSingleton.rewardManager;
 
-await SYMBOL_MANAGER.loadTextures(JSON_OBJECT["WildEffect"]);
+await SYMBOL_MANAGER.loadTextures(JSON_OBJECT["WildEffect"], JSON_OBJECT["ScatterEffect"]);
