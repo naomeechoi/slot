@@ -1,4 +1,4 @@
-import { Assets, Rectangle, Texture, AnimatedSprite } from "pixi.js";
+import { Assets, Rectangle, Texture, AnimatedSprite, Sprite } from "pixi.js";
 import { APP } from "./singleton";
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -81,7 +81,13 @@ export default class CSymbolManager {
 
     private lineCredit: number = 0;
 
-    constructor(symbolInfo_: {identifyNum: number, path: string, mulByConsecutiveCount: {key: number, value: number}[]}[], sequenceInfo_: {stop: Array<number>}[], defaultSymbolsPos_: {x: number, y: number}[][]) {
+    private ScatterCombinationMap: Map<number, number> = new Map;
+
+    constructor(
+        symbolInfo_: {identifyNum: number, path: string, mulByConsecutiveCount: {key: number, value: number}[]}[],
+        sequenceInfo_: {stop: Array<number>}[],
+        defaultSymbolsPos_: {x: number, y: number}[][],
+        ScatterCombination_: {key: number, value: number}[]) {
         for(const symbol of symbolInfo_){
             const tempSymbolInfo = new CSymbolInfo(symbol.identifyNum, symbol.path, symbol.mulByConsecutiveCount);
             this.symbolInfo.push(tempSymbolInfo);
@@ -96,14 +102,22 @@ export default class CSymbolManager {
             const defaultSymbolPos = defaultSymbolsPos_[i];
             this.defaultSymbolsPos.push(defaultSymbolPos);
         }
+
+        ScatterCombination_.forEach(element => {
+            this.ScatterCombinationMap.set(element.key, element.value);
+        })
     }
 
     ///////////////////////////////////////////////////////////////////////////
     // 싱글톤 패턴, 하나의 인스턴스만 보장
     ///////////////////////////////////////////////////////////////////////////
-    public static getInstance(symbolInfo_: {identifyNum: number, path: string, mulByConsecutiveCount: {key: number, value: number}[]}[], sequenceInfo_: {stop: Array<number>}[], defaultSymbolsPos_: {x: number, y: number}[][]): CSymbolManager {
+    public static getInstance(
+        symbolInfo_: {identifyNum: number, path: string, mulByConsecutiveCount: {key: number, value: number}[]}[],
+        sequenceInfo_: {stop: Array<number>}[],
+        defaultSymbolsPos_: {x: number, y: number}[][],
+        ScatterCombination_: {key: number, value: number}[]): CSymbolManager {
         if(this.instance == null) {
-            this.instance = new CSymbolManager(symbolInfo_, sequenceInfo_, defaultSymbolsPos_);
+            this.instance = new CSymbolManager(symbolInfo_, sequenceInfo_, defaultSymbolsPos_, ScatterCombination_);
         }
 
         return this.instance;
@@ -336,5 +350,27 @@ export default class CSymbolManager {
         }
 
         return 0;
+    }
+
+    public getWinAmountScattersCombination(combinationCount_: number) {
+        if(combinationCount_ > 5) {
+            combinationCount_ = 5;
+        }
+        const mul = this.ScatterCombinationMap.get(combinationCount_);
+        if(mul == null) {
+            return 0;
+        }
+
+        return this.lineCredit * mul;
+    }
+
+    public playScatterSymbolEffect(matchedScatters_: Sprite[]): void {
+        for(let scatter of matchedScatters_) {
+            this.createWildOrScatterEffect(false, scatter.x, scatter.y);
+        }
+    }
+
+    public stopScatterSymbolEffect(): void {
+        this.deleteWildOrScatterEffect(false);
     }
 }

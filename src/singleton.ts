@@ -82,7 +82,11 @@ export const APP = CSingleton.app;
 
 const DATA_STR = JSON.stringify(json);
 const JSON_OBJECT = JSON.parse(DATA_STR);
-CSingleton.symbolManager = CSymbolManager.getInstance(JSON_OBJECT["SymbolInfo"], JSON_OBJECT["Strip"], JSON_OBJECT["SymbolPosition"]);
+CSingleton.symbolManager = CSymbolManager.getInstance(
+    JSON_OBJECT["SymbolInfo"],
+    JSON_OBJECT["Strip"],
+    JSON_OBJECT["SymbolPosition"],
+    JSON_OBJECT["ScatterCombination"]);
 CSingleton.rewardManager = CRewardManager.getInstance(JSON_OBJECT["PayLines"], JSON_OBJECT["TotalBet"]);
 
 export const SYMBOL_MANAGER = CSingleton.symbolManager;
