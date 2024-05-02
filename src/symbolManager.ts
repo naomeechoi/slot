@@ -79,6 +79,8 @@ export default class CSymbolManager {
     private scatterEffectFrames: Texture[] = [];
     private scatterAnimatedSprites: AnimatedSprite[] = [];
 
+    private lineCredit: number = 0;
+
     constructor(symbolInfo_: {identifyNum: number, path: string, mulByConsecutiveCount: {key: number, value: number}[]}[], sequenceInfo_: {stop: Array<number>}[], defaultSymbolsPos_: {x: number, y: number}[][]) {
         for(const symbol of symbolInfo_){
             const tempSymbolInfo = new CSymbolInfo(symbol.identifyNum, symbol.path, symbol.mulByConsecutiveCount);
@@ -314,20 +316,23 @@ export default class CSymbolManager {
         }
     }
 
+    public setLineCredit(lineCredit_: number): void {
+        this.lineCredit = lineCredit_;
+    }
     ///////////////////////////////////////////////////////////////////////////////
     // 몇 배로 보상해줘야 하는지 심볼 유니크 번호로 찾기
     ///////////////////////////////////////////////////////////////////////////////
-    public getRewardMultiplierBySymbolUniqueNum(symbolUniqueNum_: number, consecutiveCount_: number): number {
-        return this.symbolInfo[symbolUniqueNum_].getMultiplier(consecutiveCount_);
+    public getWinAmountBySymbolUniqueNum(symbolUniqueNum_: number, consecutiveCount_: number): number {
+        return this.lineCredit * this.symbolInfo[symbolUniqueNum_].getMultiplier(consecutiveCount_);
     }
 
     ///////////////////////////////////////////////////////////////////////////////
     // 몇 배로 보상해줘야 하는지 심볼 텍스쳐로 찾기
     ///////////////////////////////////////////////////////////////////////////////
-    public getRewardMultiplierBySymbolTexture(symbolTexture_: Texture, consecutiveCount_: number): number {
+    public getWinAmountBySymbolTexture(symbolTexture_: Texture, consecutiveCount_: number): number {
         const uniqueNum = this.getSymbolUniqueNumByTexture(symbolTexture_);
         if(uniqueNum != null) {
-            return this.symbolInfo[uniqueNum].getMultiplier(consecutiveCount_);
+            return this.lineCredit * this.symbolInfo[uniqueNum].getMultiplier(consecutiveCount_);
         }
 
         return 0;

@@ -5,6 +5,16 @@ import { APP, SYMBOL_MANAGER, UTIL } from './singleton';
 const SHOW_LINE_TIME = 800;
 const WHOLE_LINES_VISIBLE = -1;
 
+const X_START = 208;
+const Y_START = 120;
+const WIDTH = 128;
+const HEIGHT = 108;
+const LINE_START = 0;
+const X_FINISH = 840;
+const BORDER_OFFSET = 8
+const BORDER_WIDTH = 5;
+const Z_FRONT = 2;
+
 ///////////////////////////////////////////////////////////////////////////////
 export default class CRewardManager {
     private static instance: CRewardManager | null = null;
@@ -17,8 +27,8 @@ export default class CRewardManager {
     private matchedSprites: Sprite[][] = [];
 
     // 라인, 사각형, 라인마다 이긴 금액
-    private lineGraphics: Graphics[] = [];
-    private rectGraphics: Graphics[] = [];
+    private lineGraphics: (Graphics|null)[] = [];
+    private rectGraphics: (Graphics|null)[] = [];
     private lineWinTexts: Text[] = [];
 
     // 현재 어떤 라인이 보여지고 있는지
@@ -169,7 +179,7 @@ export default class CRewardManager {
         const PREV_SYMBOL_NOT_DECIDED = -1;
         const NO_MULTIPLIER = 0;
 
-        this.oneLineCredit = this.totalBetArray[this.totalBetCurIdx] / 125;
+        SYMBOL_MANAGER.setLineCredit(this.totalBetArray[this.totalBetCurIdx] / 125);
 
         for(const payLine of this.payLines) {
             let prevSymbolUniqueNum: number = PREV_SYMBOL_NOT_DECIDED;
@@ -208,7 +218,7 @@ export default class CRewardManager {
             }
 
             // 보상에 곱해줄 값이 있는지 확인한다.
-            const multiplier = SYMBOL_MANAGER.getRewardMultiplierBySymbolUniqueNum(prevSymbolUniqueNum, matchedSpriteArray.length);
+            const multiplier = SYMBOL_MANAGER.getWinAmountBySymbolUniqueNum(prevSymbolUniqueNum, matchedSpriteArray.length);
             if(multiplier > NO_MULTIPLIER) {
                 this.matchedLines.push(payLine);
                 this.matchedSprites.push(matchedSpriteArray);
@@ -231,62 +241,24 @@ export default class CRewardManager {
     // 맞춰진 라인, 사각형, 이긴 금액을 그린다.
     ///////////////////////////////////////////////////////////////////////////
     private drawResult(): void {
-        const X_START = 208;
-        const Y_START = 120;
-        const WIDTH = 128;
-        const HEIGHT = 108;
-        const LINE_START = 0;
-        const X_FINISH = 840;
-        const BORDER_OFFSET = 8;
-
-        const BORDER_WIDTH = 5;
-        const Z_FRONT = 2;
+        
 
         for(let i = 0; i < this.matchedLines.length; i++) {
             const RANDOM_COLOR = Math.floor(Math.random() * 0xFFFFFF) + 1;
 
             //라인 그리기
             const matchedLine = this.matchedLines[i];
-            const lineGraphic = new Graphics();
-            for(let j = 0; j < matchedLine.length; j++) {
-                const y = Y_START + (Math.floor((matchedLine[j]) / 5) * HEIGHT) + (HEIGHT / 2);
-                if(j == LINE_START) {
-                    lineGraphic.moveTo(X_START, y);
-                }
-
-                const x = X_START + ((matchedLine[j]) % 5) * WIDTH + (WIDTH / 2);
-                lineGraphic.lineTo(x, y);
-
-                if(j == matchedLine.length - 1) {
-                    lineGraphic.lineTo(X_FINISH, y);
-                }
-            }
-            lineGraphic.zIndex = Z_FRONT;
-            lineGraphic.stroke({ width: BORDER_WIDTH, color: RANDOM_COLOR });
-            APP.stage.addChild(lineGraphic);
-            this.lineGraphics.push(lineGraphic);
+            this.drawLine(matchedLine, RANDOM_COLOR);
 
             //사각형 바운더리 그리기
-            const rectGraphic = new Graphics();
-            for(const matchedSprite of this.matchedSprites[i]) {
-                rectGraphic.rect(matchedSprite.x, matchedSprite.y, WIDTH - BORDER_OFFSET, HEIGHT - BORDER_OFFSET);
-                rectGraphic.stroke({ width: BORDER_WIDTH, color: RANDOM_COLOR });
-            }
-            rectGraphic.zIndex = Z_FRONT;
-            rectGraphic.visible = false;
-            APP.stage.addChild(rectGraphic);
-            this.rectGraphics.push(rectGraphic);
+            this.drawRect(i, RANDOM_COLOR);
 
             // 라인 윈 페이 텍스트 그리기
-            let style = new TextStyle({fontSize: 12, fill: RANDOM_COLOR});
-            let oneLineWinPay = this.oneLineCredit * SYMBOL_MANAGER.getRewardMultiplierBySymbolTexture(this.matchedSprites[i][0].texture, this.matchedSprites[i].length);
-            let textContent: string = "Line Win Pays: " + oneLineWinPay;
-            let tempText = new Text({x: 150, y:555, zIndex:Z_FRONT, text: textContent, style});
-            tempText.visible = false;
-            APP.stage.addChild(tempText);
-            this.lineWinTexts.push(tempText);
+            let oneLineWinAmount = SYMBOL_MANAGER.getWinAmountBySymbolTexture(this.matchedSprites[i][0].texture, this.matchedSprites[i].length);
+            this.drawLineWinText(oneLineWinAmount, RANDOM_COLOR);
 
-            this.win += oneLineWinPay;
+            // 총합에 더해주기
+            this.win += oneLineWinAmount;
         }
 
         // 총합 윈 텍스트
@@ -305,6 +277,58 @@ export default class CRewardManager {
             this.showLinesAndRectsOneByOne(0);
         }, SHOW_LINE_TIME * 2);
         this.timeoutArray.push(showLineOneByOneTimeout);
+    }
+
+    private drawLine(matchedLine_: number[], color_: number): void {
+        if(matchedLine_.length == 0) {
+            this.lineGraphics.push(null);
+            return;
+        }
+
+        const lineGraphic = new Graphics();
+            for(let j = 0; j < matchedLine_.length; j++) {
+                const y = Y_START + (Math.floor((matchedLine_[j]) / 5) * HEIGHT) + (HEIGHT / 2);
+                if(j == LINE_START) {
+                    lineGraphic.moveTo(X_START, y);
+                }
+
+                const x = X_START + ((matchedLine_[j]) % 5) * WIDTH + (WIDTH / 2);
+                lineGraphic.lineTo(x, y);
+
+                if(j == matchedLine_.length - 1) {
+                    lineGraphic.lineTo(X_FINISH, y);
+                }
+            }
+            lineGraphic.zIndex = Z_FRONT;
+            lineGraphic.stroke({ width: BORDER_WIDTH, color: color_ });
+            APP.stage.addChild(lineGraphic);
+            this.lineGraphics.push(lineGraphic);
+    }
+
+    private drawRect(lineIdx_: number, color_: number): void {
+        if(this.matchedSprites[lineIdx_].length == 0) {
+            this.rectGraphics.push(null);
+            return;
+        }
+
+        const rectGraphic = new Graphics();
+        for(const matchedSprite of this.matchedSprites[lineIdx_]) {
+            rectGraphic.rect(matchedSprite.x, matchedSprite.y, WIDTH - BORDER_OFFSET, HEIGHT - BORDER_OFFSET);
+            rectGraphic.stroke({ width: BORDER_WIDTH, color: color_ });
+        }
+        rectGraphic.zIndex = Z_FRONT;
+        rectGraphic.visible = false;
+        APP.stage.addChild(rectGraphic);
+        this.rectGraphics.push(rectGraphic);
+    }
+
+    private drawLineWinText(winAmount_: number, color_: number): void {
+        let textContent: string = "Line Win Pays: " + winAmount_;
+            let style = new TextStyle({fontSize: 12, fill: color_});
+            let tempText = new Text({x: 150, y:555, zIndex:Z_FRONT, text: textContent, style});
+            tempText.visible = false;
+            APP.stage.addChild(tempText);
+            this.lineWinTexts.push(tempText);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -333,21 +357,27 @@ export default class CRewardManager {
     ///////////////////////////////////////////////////////////////////////////
     // visible 설정
     ///////////////////////////////////////////////////////////////////////////
-    private setGraphicsOrTextVisible(GraphicsArray_: Graphics[]|Text[], bVisible_: boolean, visibleIdx_:number = -1): void {
+    private setGraphicsOrTextVisible(GraphicsArray_: (Graphics|null)[]|Text[], bVisible_: boolean, visibleIdx_:number = -1): void {
         if(visibleIdx_ != -1) {
             if(GraphicsArray_[visibleIdx_] == null) {
                 return;
             }
 
             for(const graphic of GraphicsArray_) {
+                if(graphic == null) {
+                    continue;
+                }
                 graphic.visible = false;
             }
 
-            GraphicsArray_[visibleIdx_].visible = true;
+            GraphicsArray_[visibleIdx_]!.visible = true;
             return;
         }
 
         for(const graphic of GraphicsArray_) {
+            if(graphic == null) {
+                continue;
+            }
             graphic.visible = bVisible_;
         }
     }
@@ -453,11 +483,19 @@ export default class CRewardManager {
         
         this.matchedLines = [];
         for(const lineGraphic of this.lineGraphics) {
+            if(lineGraphic == null) {
+                continue;
+            }
+
             APP.stage.removeChild(lineGraphic);
         }
         this.lineGraphics = [];
 
         for(const rectGraphic of this.rectGraphics) {
+            if(rectGraphic == null) {
+                continue;
+            }
+
             APP.stage.removeChild(rectGraphic);
         }
         this.rectGraphics = [];
