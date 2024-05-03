@@ -192,7 +192,7 @@ export default class CReel {
     // 위치를 풀 가장 뒷자리로 옮겨주고 텍스쳐를 바꿔준다.
     ///////////////////////////////////////////////////////////////////////////
     private changeTextureAndRelocate(target_: CSymbol): void {
-        const Y_POS_OUT_OF_BOUNDARY = 660;
+        const Y_POS_OUT_OF_BOUNDARY = 624;
 
         if(target_.sprite.y < Y_POS_OUT_OF_BOUNDARY) {
             return;
