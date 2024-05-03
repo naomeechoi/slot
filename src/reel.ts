@@ -2,7 +2,7 @@ import { Sprite } from "pixi.js";
 import { TweenMax } from 'gsap/TweenMax';
 import { APP, SYMBOL_MANAGER, UTIL } from "./singleton"
 
-const Y_POS_GAP = 108;
+const Y_POS_GAP = 100;
 const WAIT_FOR_STOP_SIGN = -1;
 const FIRST_REEL_DOES_NOT_NEED_PERMISSION = 0;
 const SYMBOLS_ON_SCREEN_LENGTH = 4;
@@ -150,7 +150,7 @@ export default class CReel {
     private moveSymbolByTweenMaxRecursion(symbol_: CSymbol): void {
         const THUD_VISUAL_EFFECT = 50;
         const THUD_EFFECT_DELAY = 0.015;
-        const MAX_Y_POS = 552;
+        const MAX_Y_POS = 524;
         // 스핀 스탑할 때 텅하는 효과, 재귀 종료
 
             // 재귀 호출로 이미지 이동 및 변경

@@ -41,7 +41,7 @@ export default class CSlot {
         document.body.appendChild(APP.canvas);
 
         // 백그라운드 텍스쳐 로드
-        const texture = await Assets.loader.load('assets/background.png');
+        let texture = await Assets.loader.load('assets/background.png');
 
         // 백그라운드 생성
         const background = new Sprite(texture);
@@ -54,6 +54,21 @@ export default class CSlot {
         background.zIndex = 1;
 
         APP.stage.addChild(background);
+
+        // 백그라운드 텍스쳐 로드
+        texture = await Assets.loader.load('assets/background2.png');
+
+        // 백그라운드 생성
+        const background2= new Sprite(texture);
+
+        // Move the sprite to the center of the screen
+        background2.x = 0;
+        background2.y = 0;
+
+        // 백그라운드 이미지가 항상 뒤에 오도록
+        background2.zIndex = -1;
+
+        APP.stage.addChild(background2);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -62,7 +77,7 @@ export default class CSlot {
     public setUI(): void {
         // 시작 버튼
         this.startButton = new Graphics();
-        this.startButton.circle(805, 623, 41);
+        this.startButton.circle(828, 638, 41);
         this.startButton.fill({alpha: 0.3});
         this.startButton.tint = 0xffef55;
         this.startButton.zIndex = 2;
@@ -73,12 +88,12 @@ export default class CSlot {
 
         // 오토 플레이 버튼
         this.autoButton = new Graphics();
-        this.autoButton.ellipse(685, 623, 43, 20);
+        this.autoButton.ellipse(708, 639, 43, 20);
         this.autoButton.fill(0xffef55);
 
-        this.autoButton.moveTo(670, 615);
-        this.autoButton.lineTo(710, 625);
-        this.autoButton.lineTo(670, 635);
+        this.autoButton.moveTo(692, 630);
+        this.autoButton.lineTo(732, 640);
+        this.autoButton.lineTo(692, 650);
         this.autoButton.fill(0x04B45F);
 
         this.autoButton.zIndex = 2;
@@ -210,22 +225,22 @@ export default class CSlot {
             this.startGame();
 
             this.autoButton.clear();
-            this.autoButton.ellipse(685, 623, 43, 20);
+            this.autoButton.ellipse(708, 639, 43, 20);
             this.autoButton.fill(0xffef55);
     
-            this.autoButton.rect(668, 615, 10, 20);
-            this.autoButton.rect(688, 615, 10, 20);
+            this.autoButton.rect(692, 630, 10, 20);
+            this.autoButton.rect(712, 630, 10, 20);
             this.autoButton.fill(0x04B45F);
         } else {
             this.bAuto = false;
 
             this.autoButton.clear();
-            this.autoButton.ellipse(685, 623, 43, 20);
+            this.autoButton.ellipse(708, 639, 43, 20);
             this.autoButton.fill(0xffef55);
     
-            this.autoButton.moveTo(670, 615);
-            this.autoButton.lineTo(710, 625);
-            this.autoButton.lineTo(670, 635);
+            this.autoButton.moveTo(692, 630);
+            this.autoButton.lineTo(732, 640);
+            this.autoButton.lineTo(692, 650);
             this.autoButton.fill(0x04B45F);
         }
     }

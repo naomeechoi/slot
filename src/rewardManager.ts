@@ -5,12 +5,12 @@ import { APP, SYMBOL_MANAGER, UTIL, EAnimatedSprite } from './singleton';
 const SHOW_LINE_TIME = 800;
 const WHOLE_LINES_VISIBLE = -1;
 
-const X_START = 208;
-const Y_START = 120;
+const X_START = 168;
+const Y_START = 124;
 const WIDTH = 128;
-const HEIGHT = 108;
+const HEIGHT = 100;
 const LINE_START = 0;
-const X_FINISH = 840;
+const X_FINISH = 800;
 const BORDER_OFFSET = 8
 const BORDER_WIDTH = 5;
 const Z_FRONT = 2;
@@ -51,6 +51,7 @@ export default class CRewardManager {
 
     // 결과 체크 끝났는 지
     private bFinishedCheckResult: boolean = false;
+    private bCanSkip: boolean = false;
 
     private timeoutArray: NodeJS.Timeout[] = [];
 
@@ -71,20 +72,20 @@ export default class CRewardManager {
 
         // 이긴 금액 텍스트 셋팅
         let style = new TextStyle({fontSize: 28, fill: '#ffffff'});
-        this.winText = new Text({x: 455, y:635, zIndex:2, text: 0, style});
+        this.winText = new Text({x: 475, y:652, zIndex:2, text: 0, style});
         this.winText.visible = false;
         this.winText.anchor.set(0.5);
         APP.stage.addChild(this.winText);
 
         // 전체 베팅 금액 텍스트 셋팅
         style = new TextStyle({fontSize: 22, fill: '#ffffff'});
-        this.totalBetText = new Text({x: 207, y:631, zIndex:2, text: UTIL.addDollarSignAndCommaToNumber(this.totalBetArray[this.totalBetCurIdx]), style});
+        this.totalBetText = new Text({x: 227, y:648, zIndex:2, text: UTIL.addDollarSignAndCommaToNumber(this.totalBetArray[this.totalBetCurIdx]), style});
         this.totalBetText.anchor.set(0.5);
         APP.stage.addChild(this.totalBetText);
 
         // 전체 베팅 금액 변경 왼쪽 버튼
         this.totalBetLeftButton = new Graphics();
-        this.totalBetLeftButton.rect(110, 610, 40, 40);
+        this.totalBetLeftButton.rect(130, 627, 40, 40);
         this.totalBetLeftButton.fill({color: 0x66cc00, alpha: 0});
         this.totalBetLeftButton.zIndex = 2;
         this.totalBetLeftButton.eventMode = 'static';
@@ -93,7 +94,7 @@ export default class CRewardManager {
 
         // 전체 베팅 금액 변경 오른쪽
         this.totalBetRightButton = new Graphics();
-        this.totalBetRightButton.rect(265, 610, 40, 40);
+        this.totalBetRightButton.rect(285, 627, 40, 40);
         this.totalBetRightButton.fill({color: 0x66cc00, alpha: 0});
         this.totalBetRightButton.zIndex = 2;
         this.totalBetRightButton.eventMode = 'static';
@@ -368,7 +369,7 @@ export default class CRewardManager {
             if(typeof matchedSprite == "number") {
                 continue;
             }
-            rectGraphic.rect(matchedSprite.x, matchedSprite.y, WIDTH - BORDER_OFFSET, HEIGHT - BORDER_OFFSET);
+            rectGraphic.rect(matchedSprite.x, matchedSprite.y, WIDTH - BORDER_OFFSET, HEIGHT);
             rectGraphic.stroke({ width: BORDER_WIDTH, color: color_ });
         }
         rectGraphic.zIndex = Z_FRONT;
@@ -379,7 +380,7 @@ export default class CRewardManager {
 
     private drawLineWinText(winAmount_: number, color_: number): void {
         let textContent: string = "Line Win Pays: " + winAmount_;
-            let style = new TextStyle({fontSize: 12, fill: color_});
+            let style = new TextStyle({fontSize: 18, fill: color_});
             let tempText = new Text({x: 150, y:555, zIndex:Z_FRONT, text: textContent, style});
             tempText.visible = false;
             APP.stage.addChild(tempText);
@@ -394,6 +395,15 @@ export default class CRewardManager {
             this.bFinishedCheckResult = false;
             return true;
         }
+        return false;
+    }
+
+    public isCanSkip(): boolean {
+        if(this.bCanSkip == true) {
+            this.bCanSkip = false;
+            return true;
+        }
+
         return false;
     }
 
@@ -589,6 +599,7 @@ export default class CRewardManager {
         this.winText.visible = false;
         this.winText.text = 0;
         this.bFinishedCheckResult = false;
+        this.bCanSkip = false;
 
         SYMBOL_MANAGER.deleteWholeEffect();
 
