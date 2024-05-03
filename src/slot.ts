@@ -132,20 +132,17 @@ export default class CSlot {
                 this.bStartToCheckPayLines = false;
 
                 // 화면에 나와있는 모든 심볼들의 아이덴티티를 담는다.
-                let symbolSpritesOnSlot: Sprite[][] = [];
+                let symbolSpritesOnSlot: Sprite[] = [];
                 const ROWS = 4;
                 
-                    for(let i = 0; i < this.observerReels.length; i++) {
-                        let tempSpriteArray: Sprite[] = [];
-                        for(let j = 0; j < ROWS; j++) {
-                            const symbolSprite = this.observerReels[i].getSymbolsOnScreenMap().get(j);
-                            if(symbolSprite != null) {
-                                tempSpriteArray.push(symbolSprite);
-                            } 
-                        }
-                        symbolSpritesOnSlot.push(tempSpriteArray);
+                for(let i = 0; i < ROWS; i++) {
+                    for(let j = 0; j < this.observerReels.length; j++) {
+                        const symbolSprite = this.observerReels[j].getSymbolsOnScreenMap().get(i);
+                        if(symbolSprite != null) {
+                            symbolSpritesOnSlot.push(symbolSprite);
+                        } 
                     }
-                
+                }
 
                 // 리워드 메니저가 계산하고 라인을 그리도록 정보를 넘겨준다.
                 REWARD_MANAGER.checkResult(symbolSpritesOnSlot);
@@ -177,6 +174,9 @@ export default class CSlot {
         this.bCanStart = false;
         this.startButton.cursor = 'default';
         this.startButton.tint = 0x000000;
+
+        // 시작할 때 라인 크레딧 고정
+        REWARD_MANAGER.setLineCredit();
 
         for(let i = 0; i < REEL_COUNT; i++){
             const reelSpinTermTimeout = setTimeout(() => {

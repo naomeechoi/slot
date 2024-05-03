@@ -25,7 +25,7 @@ export default class CRewardManager {
     // 맞춰진 라인에 대한 배열, 맞춰진 라인에 맞는 심볼 스트라이트에 대한 배열
     private matchedLines: (number[]|number)[] = [];
     private matchedSprites: Sprite[][] = [];
-    private matchedSameScatters: Sprite[][];
+    private matchedSameScatters: Sprite[][] = [[], [], [], []];
 
     // 라인, 사각형, 라인마다 이긴 금액
     private lineGraphics: (Graphics|number)[] = [];
@@ -100,8 +100,6 @@ export default class CRewardManager {
         this.totalBetRightButton.cursor = 'pointer';
         this.totalBetRightButton.on('pointerdown', this.upTotalBet.bind(this));
         APP.stage.addChild(this.totalBetRightButton);
-
-        this.matchedSameScatters = [[], [], [], []];
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -172,26 +170,29 @@ export default class CRewardManager {
     }
 
     ///////////////////////////////////////////////////////////////////////////
+    // 라인 한 줄당 크레딧 설정
+    ///////////////////////////////////////////////////////////////////////////
+    public setLineCredit(): void {
+        SYMBOL_MANAGER.setLineCredit(this.totalBetArray[this.totalBetCurIdx] / 125);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
     // 페이라인(결과)을 체크하고 라인을 그린다.
     ///////////////////////////////////////////////////////////////////////////
-    public checkResult(symbolSpritesArray_: Sprite[][]): void {
-        if(this.totalBetArray[this.totalBetCurIdx] == null) {
-            return;
-        }
-
-        for(const symbolSprites of symbolSpritesArray_) {
-            for(const symbolSprite of symbolSprites) {
-                if(SYMBOL_MANAGER.isScatterSymbol(symbolSprite.texture.label)) {
-                    const scatterNum = SYMBOL_MANAGER.whichScatterSymbol(symbolSprite.texture.label);
-                    if(scatterNum != -1) {
-                        this.matchedSameScatters[scatterNum].push(symbolSprite);
-                    }
-                    this.matchedSameScatters[0].push(symbolSprite);
+    public checkScatters(symbolSpritesArray_: Sprite[]): void {
+        for(const symbolSprite of symbolSpritesArray_) {
+            if(SYMBOL_MANAGER.isScatterSymbol(symbolSprite.texture.label)) {
+                const scatterNum = SYMBOL_MANAGER.whichScatterSymbol(symbolSprite.texture.label);
+                if(scatterNum != -1) {
+                    this.matchedSameScatters[scatterNum].push(symbolSprite);
                 }
+                this.matchedSameScatters[0].push(symbolSprite);
             }
         }
 
-        if(this.matchedSameScatters[0].length == 3) {
+        // 동일 스케터 3개와 콤비네이션이 겹치지 않도록
+        const THREE_SYMBOLS = 3;
+        if(this.matchedSameScatters[0].length == THREE_SYMBOLS) {
             let prevScatter: Sprite | null = null;
             let count = 0;
             for(const scatter of this.matchedSameScatters[0]) {
@@ -202,41 +203,41 @@ export default class CRewardManager {
                 }
 
                 if(prevScatter == scatter) {
-                    console.log(count);
                     count++;
                 }
             }
 
-            if(count == 3) {
+            if(count == THREE_SYMBOLS) {
                 this.matchedSameScatters[0] = [];
             }
         }
 
         for(let i = this.matchedSameScatters.length - 1; i >= 0; i--) {
-            if(this.matchedSameScatters[i].length >= 3) {
+            if(this.matchedSameScatters[i].length >= THREE_SYMBOLS) {
                 this.matchedLines.push(i);
                 this.matchedSprites.push([]);
             }
         }
+    }
 
-        const symbolsOnSlotList: Sprite[] = [];
-        for(let i = 0; i < 4; i++) {
-            for(let j = 0; j < 5; j++) {
-                symbolsOnSlotList.push(symbolSpritesArray_[j][i]);
-            }
+    ///////////////////////////////////////////////////////////////////////////
+    // 페이라인(결과)을 체크하고 라인을 그린다.
+    ///////////////////////////////////////////////////////////////////////////
+    public checkResult(symbolSpritesArray_: Sprite[]): void {
+        if(this.totalBetArray[this.totalBetCurIdx] == null) {
+            return;
         }
+
+        this.checkScatters(symbolSpritesArray_);
 
         const PREV_SYMBOL_NOT_DECIDED = -1;
         const NO_MULTIPLIER = 0;
-
-        SYMBOL_MANAGER.setLineCredit(this.totalBetArray[this.totalBetCurIdx] / 125);
-
         for(const payLine of this.payLines) {
             let prevSymbolUniqueNum: number = PREV_SYMBOL_NOT_DECIDED;
             let matchedSpriteArray: Sprite[] = [];
 
             for(const lineElement of payLine) {
-                let symbolUniqueNum = SYMBOL_MANAGER.getSymbolUniqueNumByTexture(symbolsOnSlotList[lineElement].texture);
+                let symbolUniqueNum = SYMBOL_MANAGER.getSymbolUniqueNumByTexture(symbolSpritesArray_[lineElement].texture);
                 if(symbolUniqueNum == null) {
                     continue;     
                 }
@@ -249,18 +250,17 @@ export default class CRewardManager {
                         continue;
                     }
 
-                    matchedSpriteArray.push(symbolsOnSlotList[lineElement]);
+                    matchedSpriteArray.push(symbolSpritesArray_[lineElement]);
                     continue;
                 }
 
                 if(prevSymbolUniqueNum == symbolUniqueNum) {
-                    matchedSpriteArray.push(symbolsOnSlotList[lineElement]);
+                    matchedSpriteArray.push(symbolSpritesArray_[lineElement]);
                 }
                 else {
                     // 스케터 심볼은 와일드 심볼로 대체할 수 없다
-                    if(SYMBOL_MANAGER.isWildSymbol(symbolUniqueNum)
-                    && !SYMBOL_MANAGER.isScatterSymbol(prevSymbolUniqueNum)) {
-                        matchedSpriteArray.push(symbolsOnSlotList[lineElement]);
+                    if(SYMBOL_MANAGER.isWildSymbol(symbolUniqueNum)) {
+                        matchedSpriteArray.push(symbolSpritesArray_[lineElement]);
                     } else {
                         break;
                     }
@@ -303,7 +303,7 @@ export default class CRewardManager {
             this.drawRect(i, RANDOM_COLOR);
 
             if(typeof matchedLine == "number") {
-                oneLineWinAmount = SYMBOL_MANAGER.getWinAmountScattersCombination(matchedLine, this.matchedSameScatters[matchedLine].length);
+                oneLineWinAmount = SYMBOL_MANAGER.getScattersWinAmount(matchedLine, this.matchedSameScatters[matchedLine].length);
             } else {
                 oneLineWinAmount = SYMBOL_MANAGER.getWinAmountBySymbolTexture(this.matchedSprites[i][0].texture, this.matchedSprites[i].length);
             }

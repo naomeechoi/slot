@@ -288,7 +288,7 @@ export default class CSymbolManager {
         return false;
     }
 
-     ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
     // 어떤 스케터 심볼인지 확인
     ///////////////////////////////////////////////////////////////////////////
     public whichScatterSymbol(value_: string | undefined): number {
@@ -359,30 +359,6 @@ export default class CSymbolManager {
         }
     }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // 심볼 이펙트 삭제
-    ///////////////////////////////////////////////////////////////////////////////
-    public deleteEffect(effect_: EAnimatedSprite): void {
-        let animatedSprites;
-
-        switch(effect_) {
-            case EAnimatedSprite.wild: {
-                animatedSprites = this.wildAnimatedSprites;
-            } break;
-            case EAnimatedSprite.scatterCombo: {
-                animatedSprites = this.scatterComboAnimatedSprites;
-            } break;
-            case EAnimatedSprite.scatter: {
-                animatedSprites = this.scatterAnimatedSprites;
-            } break;
-
-        }
-
-        for(const animatedSprite of animatedSprites) {
-            APP.stage.removeChild(animatedSprite);
-        }
-    }
-
     public setLineCredit(lineCredit_: number): void {
         this.lineCredit = lineCredit_;
     }
@@ -405,13 +381,18 @@ export default class CSymbolManager {
         return 0;
     }
 
-    public getWinAmountScattersCombination(matchedScatter_: number, combinationCount_: number) {
-        if(combinationCount_ > 5) {
-            combinationCount_ = 5;
+    ///////////////////////////////////////////////////////////////////////////////
+    // 스케터 몇 배로 보상해줘야 하는지
+    ///////////////////////////////////////////////////////////////////////////////
+    public getScattersWinAmount(matchedScatter_: number, combinationCount_: number) {
+        const COMBO_MAX = 5;
+        if(combinationCount_ > COMBO_MAX) {
+            combinationCount_ = COMBO_MAX;
         }
 
+        const COMBO = 0;
         let mul: number | undefined;
-        if(matchedScatter_ == 0) {
+        if(matchedScatter_ == COMBO) {
             mul = this.ScatterCombinationMap.get(combinationCount_);
         } else {
             mul = this.symbolInfo[matchedScatter_].getMultiplier(combinationCount_)
@@ -424,31 +405,54 @@ export default class CSymbolManager {
         return this.lineCredit * mul;
     }
 
+    ///////////////////////////////////////////////////////////////////////////////
+    // 스케터 콤보 이펙트 플레이 삭제
+    ///////////////////////////////////////////////////////////////////////////////
     public playScatterComboSymbolEffect(matchedScatters_: Sprite[]): void {
         for(let scatter of matchedScatters_) {
             this.createEffect(EAnimatedSprite.scatterCombo, scatter.x, scatter.y);
         }
     }
 
+    ///////////////////////////////////////////////////////////////////////////////
+    // 스케터 이펙트 플레이 삭제
+    ///////////////////////////////////////////////////////////////////////////////
     public playScatterSymbolEffect(matchedScatters_: Sprite[]): void {
         for(let scatter of matchedScatters_) {
             this.createEffect(EAnimatedSprite.scatter, scatter.x, scatter.y);
         }
     }
 
-    public playWildSymbolEffect(matchedScatters_: Sprite[]): void {
-        for(let scatter of matchedScatters_) {
-            this.createEffect(EAnimatedSprite.wild, scatter.x, scatter.y);
-        }
-    }
-
-    public stopScatterSymbolEffect(): void {
-        this.deleteEffect(EAnimatedSprite.scatterCombo);
-    }
-
+    ///////////////////////////////////////////////////////////////////////////////
+    // 심볼 이펙트 전체 삭제
+    ///////////////////////////////////////////////////////////////////////////////
     public deleteWholeEffect(): void {
         this.deleteEffect(EAnimatedSprite.wild);
         this.deleteEffect(EAnimatedSprite.scatterCombo);
         this.deleteEffect(EAnimatedSprite.scatter);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // 심볼 이펙트 삭제
+    ///////////////////////////////////////////////////////////////////////////////
+    private deleteEffect(effect_: EAnimatedSprite): void {
+        let animatedSprites;
+
+        switch(effect_) {
+            case EAnimatedSprite.wild: {
+                animatedSprites = this.wildAnimatedSprites;
+            } break;
+            case EAnimatedSprite.scatterCombo: {
+                animatedSprites = this.scatterComboAnimatedSprites;
+            } break;
+            case EAnimatedSprite.scatter: {
+                animatedSprites = this.scatterAnimatedSprites;
+            } break;
+
+        }
+
+        for(const animatedSprite of animatedSprites) {
+            APP.stage.removeChild(animatedSprite);
+        }
     }
 }
