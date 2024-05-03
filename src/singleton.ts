@@ -72,6 +72,12 @@ class CUtilities {
 }
 export const UTIL = CUtilities;
 
+export enum EAnimatedSprite {
+    wild,
+    scatterCombo,
+    scatter,
+};
+
 class CSingleton {
     public static app: Application;
     public static symbolManager: CSymbolManager;
@@ -92,4 +98,4 @@ CSingleton.rewardManager = CRewardManager.getInstance(JSON_OBJECT["PayLines"], J
 export const SYMBOL_MANAGER = CSingleton.symbolManager;
 export const REWARD_MANAGER = CSingleton.rewardManager;
 
-await SYMBOL_MANAGER.loadTextures(JSON_OBJECT["WildEffect"], JSON_OBJECT["ScatterEffect"]);
+await SYMBOL_MANAGER.loadTextures(JSON_OBJECT["WildEffect"], JSON_OBJECT["ScatterComboEffect"], JSON_OBJECT["ScatterEffect"]);

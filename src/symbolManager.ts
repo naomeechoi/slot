@@ -1,5 +1,5 @@
 import { Assets, Rectangle, Texture, AnimatedSprite, Sprite } from "pixi.js";
-import { APP } from "./singleton";
+import { APP, EAnimatedSprite } from "./singleton";
 
 ///////////////////////////////////////////////////////////////////////////////
 // 총 14개의 심볼 정보들
@@ -75,6 +75,10 @@ export default class CSymbolManager {
     private wildEffectFrames: Texture[] = [];
     private wildAnimatedSprites: AnimatedSprite[] = [];
 
+    // 스케터 심볼 콤보 효과 관련
+    private scatterComboEffectFrames: Texture[] = [];
+    private scatterComboAnimatedSprites: AnimatedSprite[] = [];
+
     // 스케터 심볼 효과 관련
     private scatterEffectFrames: Texture[] = [];
     private scatterAnimatedSprites: AnimatedSprite[] = [];
@@ -126,7 +130,7 @@ export default class CSymbolManager {
     ///////////////////////////////////////////////////////////////////////////////
     // 텍스쳐들을 로드한다.
     ///////////////////////////////////////////////////////////////////////////////
-    public async loadTextures(wildSpriteSheetPath_: string, scatterSpriteSheetPath_: string): Promise<void> {
+    public async loadTextures(wildSpriteSheetPath_: string, scatterComboSpriteSheetPath_: string, scatterSpriteSheetPath_: string): Promise<void> {
         for(const symbol of this.symbolInfo){
             await symbol.loadTexture();
         }
@@ -142,6 +146,14 @@ export default class CSymbolManager {
             const y = Math.floor(i / ROW) * HEIGHT;
             const tempTexture = new Texture({source: wildSpriteSheet, frame: new Rectangle(x, y, WIDTH, HEIGHT)});
             this.wildEffectFrames.push(tempTexture);
+        }
+
+        const scatterComboSpriteSheet = await Assets.loader.load(scatterComboSpriteSheetPath_);
+        for(let i = 0; i < SPRITE_IMG_NUM; i++) {
+            const x = (i % COL) * WIDTH;
+            const y = Math.floor(i / ROW) * HEIGHT;
+            const tempTexture = new Texture({source: scatterComboSpriteSheet, frame: new Rectangle(x, y, WIDTH, HEIGHT)});
+            this.scatterComboEffectFrames.push(tempTexture);
         }
 
         const scatterSpriteSheet = await Assets.loader.load(scatterSpriteSheetPath_);
@@ -276,53 +288,94 @@ export default class CSymbolManager {
         return false;
     }
 
+     ///////////////////////////////////////////////////////////////////////////
+    // 어떤 스케터 심볼인지 확인
+    ///////////////////////////////////////////////////////////////////////////
+    public whichScatterSymbol(value_: string | undefined): number {
+        if(value_ == undefined) {
+            return -1;
+        }
+
+        const SCATTERS_STR_1: RegExp = /\/1\.png$/;
+        const SCATTERS_STR_2: RegExp = /\/2\.png$/;
+        const SCATTERS_STR_3: RegExp = /\/3\.png$/;
+        
+        if(value_.match(SCATTERS_STR_1)) {
+            return 1;
+        } else if(value_.match(SCATTERS_STR_2)) {
+            return 2;
+        } else if(value_.match(SCATTERS_STR_3)) {
+            return 3;
+        }
+
+        return -1;
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // 심볼 이펙트 생성
     ///////////////////////////////////////////////////////////////////////////////
-    public createWildOrScatterEffect(isWildEffect_: boolean, x_: number, y_:number): void {
-        let effect;
-        let offsetX;
-        let offsetY;
-        let width;
-        let height;
-        let zIndex;
-        if(isWildEffect_) {
-            effect = new AnimatedSprite(this.wildEffectFrames);
-            offsetX = -10;
-            offsetY = -15;
-            width = 140;
-            height = 120;
-            zIndex = 0;
-        } else {
-            effect = new AnimatedSprite(this.scatterEffectFrames);
-            offsetX = -40;
-            offsetY = -40;
-            width = 200;
-            height = 180;
-            zIndex = 2;       
-        }
+    public createEffect(effect_: EAnimatedSprite, x_: number, y_:number): void {
+        switch(effect_) {
+            case EAnimatedSprite.wild: {
+                let newEffect = new AnimatedSprite(this.wildEffectFrames);
+                newEffect.position.set(x_ + -10, y_ + -15);
+                newEffect.width = 140;
+                newEffect.height = 120;
+                newEffect.zIndex = 0;
+                newEffect.animationSpeed = 0.45;
+                newEffect.loop = true;
+                newEffect.play();
 
-        effect.position.set(x_ + offsetX, y_ + offsetY);
-        effect.width = width;
-        effect.height = height;
-        effect.zIndex = zIndex;
-        effect.animationSpeed = 0.45;
-        effect.loop = true;
-        effect.play();
-    
-        this.wildAnimatedSprites.push(effect);
-        APP.stage.addChild(effect);
+                this.wildAnimatedSprites.push(newEffect);
+                APP.stage.addChild(newEffect);
+
+            } break;
+            case EAnimatedSprite.scatterCombo: {
+                let newEffect = new AnimatedSprite(this.scatterComboEffectFrames);
+                newEffect.position.set(x_ + -40, y_ + -40);
+                newEffect.width = 200;
+                newEffect.height = 180;
+                newEffect.zIndex = 2;
+                newEffect.animationSpeed = 0.45;
+                newEffect.loop = true;
+                newEffect.play();
+
+                this.scatterComboAnimatedSprites.push(newEffect);
+                APP.stage.addChild(newEffect);
+            } break;
+            case EAnimatedSprite.scatter: {
+                let newEffect = new AnimatedSprite(this.scatterEffectFrames);
+                newEffect.position.set(x_ + -40, y_ + -40);
+                newEffect.width = 200;
+                newEffect.height = 180;
+                newEffect.zIndex = 2;
+                newEffect.animationSpeed = 0.85;
+                newEffect.loop = true;
+                newEffect.play();
+
+                this.scatterAnimatedSprites.push(newEffect);
+                APP.stage.addChild(newEffect);
+            } break;
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////
     // 심볼 이펙트 삭제
     ///////////////////////////////////////////////////////////////////////////////
-    public deleteWildOrScatterEffect(isWildEffect_: boolean): void {
+    public deleteEffect(effect_: EAnimatedSprite): void {
         let animatedSprites;
-        if(isWildEffect_) {
-            animatedSprites = this.wildAnimatedSprites;
-        } else {
-            animatedSprites = this.scatterAnimatedSprites;
+
+        switch(effect_) {
+            case EAnimatedSprite.wild: {
+                animatedSprites = this.wildAnimatedSprites;
+            } break;
+            case EAnimatedSprite.scatterCombo: {
+                animatedSprites = this.scatterComboAnimatedSprites;
+            } break;
+            case EAnimatedSprite.scatter: {
+                animatedSprites = this.scatterAnimatedSprites;
+            } break;
+
         }
 
         for(const animatedSprite of animatedSprites) {
@@ -352,25 +405,50 @@ export default class CSymbolManager {
         return 0;
     }
 
-    public getWinAmountScattersCombination(combinationCount_: number) {
+    public getWinAmountScattersCombination(matchedScatter_: number, combinationCount_: number) {
         if(combinationCount_ > 5) {
             combinationCount_ = 5;
         }
-        const mul = this.ScatterCombinationMap.get(combinationCount_);
-        if(mul == null) {
+
+        let mul: number | undefined;
+        if(matchedScatter_ == 0) {
+            mul = this.ScatterCombinationMap.get(combinationCount_);
+        } else {
+            mul = this.symbolInfo[matchedScatter_].getMultiplier(combinationCount_)
+        }
+
+        if(mul === undefined) {
             return 0;
         }
 
         return this.lineCredit * mul;
     }
 
+    public playScatterComboSymbolEffect(matchedScatters_: Sprite[]): void {
+        for(let scatter of matchedScatters_) {
+            this.createEffect(EAnimatedSprite.scatterCombo, scatter.x, scatter.y);
+        }
+    }
+
     public playScatterSymbolEffect(matchedScatters_: Sprite[]): void {
         for(let scatter of matchedScatters_) {
-            this.createWildOrScatterEffect(false, scatter.x, scatter.y);
+            this.createEffect(EAnimatedSprite.scatter, scatter.x, scatter.y);
+        }
+    }
+
+    public playWildSymbolEffect(matchedScatters_: Sprite[]): void {
+        for(let scatter of matchedScatters_) {
+            this.createEffect(EAnimatedSprite.wild, scatter.x, scatter.y);
         }
     }
 
     public stopScatterSymbolEffect(): void {
-        this.deleteWildOrScatterEffect(false);
+        this.deleteEffect(EAnimatedSprite.scatterCombo);
+    }
+
+    public deleteWholeEffect(): void {
+        this.deleteEffect(EAnimatedSprite.wild);
+        this.deleteEffect(EAnimatedSprite.scatterCombo);
+        this.deleteEffect(EAnimatedSprite.scatter);
     }
 }
