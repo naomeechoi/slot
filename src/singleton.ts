@@ -8,7 +8,7 @@ class CUtilities {
     ///////////////////////////////////////////////////////////////////////////
     // 돈 표시에 달러 사인, 콤마 추가 하기
     ///////////////////////////////////////////////////////////////////////////
-    public static addDollarSignAndCommaToNumber(number_: number | string): string {
+    public addDollarSignAndCommaToNumber(number_: number | string): string {
         if(typeof number_ == "string") {
             number_ = parseInt(number_);
         }
@@ -51,7 +51,7 @@ class CUtilities {
     ///////////////////////////////////////////////////////////////////////////
     // 타임 아웃 제거
     ///////////////////////////////////////////////////////////////////////////
-    public static clearTimeout(timeoutArray_: NodeJS.Timeout[]) {
+    public clearTimeout(timeoutArray_: NodeJS.Timeout[]) {
         for(const timeoutEle of timeoutArray_) {
             if(timeoutEle != null) {
                 clearTimeout(timeoutEle);
@@ -62,7 +62,7 @@ class CUtilities {
     ///////////////////////////////////////////////////////////////////////////
     // 트윈 킬
     ///////////////////////////////////////////////////////////////////////////
-    public static killTweenMax(tweenArray_: TweenMax[]) {
+    public killTweenMax(tweenArray_: TweenMax[]) {
         for(const tweenEle of tweenArray_) {
             if(tweenEle != null) {
                 tweenEle.kill();
@@ -70,7 +70,7 @@ class CUtilities {
         }
     }
 }
-export const UTIL = CUtilities;
+export const UTIL = new CUtilities();
 
 export enum EAnimatedSprite {
     wild,
@@ -93,9 +93,8 @@ CSingleton.symbolManager = CSymbolManager.getInstance(
     JSON_OBJECT["Strip"],
     JSON_OBJECT["SymbolPosition"],
     JSON_OBJECT["ScatterCombination"]);
-CSingleton.rewardManager = CRewardManager.getInstance(JSON_OBJECT["PayLines"], JSON_OBJECT["TotalBet"]);
-
 export const SYMBOL_MANAGER = CSingleton.symbolManager;
-export const REWARD_MANAGER = CSingleton.rewardManager;
+await SYMBOL_MANAGER.loadSpriteTextures(JSON_OBJECT["WildEffect"], JSON_OBJECT["ScatterComboEffect"], JSON_OBJECT["ScatterEffect"]);
 
-await SYMBOL_MANAGER.loadTextures(JSON_OBJECT["WildEffect"], JSON_OBJECT["ScatterComboEffect"], JSON_OBJECT["ScatterEffect"]);
+CSingleton.rewardManager = CRewardManager.getInstance(JSON_OBJECT["PayLines"], JSON_OBJECT["TotalBet"]);
+export const REWARD_MANAGER = CSingleton.rewardManager;

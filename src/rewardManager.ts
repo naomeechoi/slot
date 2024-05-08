@@ -9,11 +9,10 @@ const X_START = 168;
 const Y_START = 124;
 const WIDTH = 128;
 const HEIGHT = 100;
-const LINE_START = 0;
 const X_FINISH = 800;
 const BORDER_OFFSET = 8
 const BORDER_WIDTH = 5;
-const Z_FRONT = 2;
+const Z_FOREMOST = 2;
 
 ///////////////////////////////////////////////////////////////////////////////
 export default class CRewardManager {
@@ -25,7 +24,7 @@ export default class CRewardManager {
     // 맞춰진 라인에 대한 배열, 맞춰진 라인에 맞는 심볼 스트라이트에 대한 배열
     private matchedLines: (number[]|number)[] = [];
     private matchedSprites: Sprite[][] = [];
-    private matchedSameScatters: Sprite[][] = [[], [], [], []];
+    private matchedScatters: Sprite[][] = [[], [], [], []];
 
     // 라인, 사각형, 라인마다 이긴 금액
     private lineGraphics: (Graphics|number)[] = [];
@@ -34,9 +33,6 @@ export default class CRewardManager {
 
     // 현재 어떤 라인이 보여지고 있는지
     private curVisibleLine: number = WHOLE_LINES_VISIBLE;
-    
-    // 한 라인당 받을 수 있는 기초 금액
-    private oneLineCredit: number = 0;
     
     // 이긴 금액
     private win: number = 0;
@@ -51,7 +47,6 @@ export default class CRewardManager {
 
     // 결과 체크 끝났는 지
     private bFinishedCheckResult: boolean = false;
-    private bCanSkip: boolean = false;
 
     private timeoutArray: NodeJS.Timeout[] = [];
 
@@ -185,36 +180,33 @@ export default class CRewardManager {
             if(SYMBOL_MANAGER.isScatterSymbol(symbolSprite.texture.label)) {
                 const scatterNum = SYMBOL_MANAGER.whichScatterSymbol(symbolSprite.texture.label);
                 if(scatterNum != -1) {
-                    this.matchedSameScatters[scatterNum].push(symbolSprite);
+                    this.matchedScatters[scatterNum].push(symbolSprite);
                 }
-                this.matchedSameScatters[0].push(symbolSprite);
+                this.matchedScatters[0].push(symbolSprite);
             }
         }
 
-        // 동일 스케터 3개와 콤비네이션이 겹치지 않도록
+        // 동일 스케터 연속과 콤비네이션이 겹치지 않도록
         const THREE_SYMBOLS = 3;
-        if(this.matchedSameScatters[0].length == THREE_SYMBOLS) {
-            let prevScatter: Sprite | null = null;
-            let count = 0;
-            for(const scatter of this.matchedSameScatters[0]) {
-                if(prevScatter === null) {
-                    prevScatter = scatter;
-                    count++;
-                    continue;
-                }
-
-                if(prevScatter == scatter) {
-                    count++;
-                }
+        let prevScatter: Sprite | null = null;
+        let count = 0;
+        for(const scatter of this.matchedScatters[0]) {
+            if(prevScatter === null) {
+                prevScatter = scatter;
+                count++;
+                continue;
             }
-
-            if(count == THREE_SYMBOLS) {
-                this.matchedSameScatters[0] = [];
+            if(prevScatter.texture == scatter.texture) {
+                count++;
             }
         }
 
-        for(let i = this.matchedSameScatters.length - 1; i >= 0; i--) {
-            if(this.matchedSameScatters[i].length >= THREE_SYMBOLS) {
+        if(count == this.matchedScatters[0].length) {
+            this.matchedScatters[0] = [];
+        }
+
+        for(let i = this.matchedScatters.length - 1; i >= 0; i--) {
+            if(this.matchedScatters[i].length >= THREE_SYMBOLS) {
                 this.matchedLines.push(i);
                 this.matchedSprites.push([]);
             }
@@ -289,7 +281,7 @@ export default class CRewardManager {
     }
     
     ///////////////////////////////////////////////////////////////////////////
-    // 맞춰진 라인, 사각형, 이긴 금액을 그린다.
+    // 결과를 그린다.
     ///////////////////////////////////////////////////////////////////////////
     private drawResult(): void {
         for(let i = 0; i < this.matchedLines.length; i++) {
@@ -304,7 +296,7 @@ export default class CRewardManager {
             this.drawRect(i, RANDOM_COLOR);
 
             if(typeof matchedLine == "number") {
-                oneLineWinAmount = SYMBOL_MANAGER.getScattersWinAmount(matchedLine, this.matchedSameScatters[matchedLine].length);
+                oneLineWinAmount = SYMBOL_MANAGER.getScattersWinAmount(matchedLine, this.matchedScatters[matchedLine].length);
             } else {
                 oneLineWinAmount = SYMBOL_MANAGER.getWinAmountBySymbolTexture(this.matchedSprites[i][0].texture, this.matchedSprites[i].length);
             }
@@ -332,32 +324,39 @@ export default class CRewardManager {
         this.timeoutArray.push(showLineOneByOneTimeout);
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // 라인 그린다.
+    ///////////////////////////////////////////////////////////////////////////
     private drawLine(matchedLine_: number[] | number, color_: number): void {
         if(typeof matchedLine_ == "number") {
             this.lineGraphics.push(matchedLine_);
             return;
         }
 
-        const lineGraphic = new Graphics();
+        const LINE_START = 0;
+        let lineGraphic = new Graphics();
             for(let j = 0; j < matchedLine_.length; j++) {
-                const y = Y_START + (Math.floor((matchedLine_[j]) / 5) * HEIGHT) + (HEIGHT / 2);
+                const Y = Y_START + (Math.floor((matchedLine_[j]) / 5) * HEIGHT) + (HEIGHT / 2);
                 if(j == LINE_START) {
-                    lineGraphic.moveTo(X_START, y);
+                    lineGraphic.moveTo(X_START, Y);
                 }
 
                 const x = X_START + ((matchedLine_[j]) % 5) * WIDTH + (WIDTH / 2);
-                lineGraphic.lineTo(x, y);
+                lineGraphic.lineTo(x, Y);
 
                 if(j == matchedLine_.length - 1) {
-                    lineGraphic.lineTo(X_FINISH, y);
+                    lineGraphic.lineTo(X_FINISH, Y);
                 }
             }
-            lineGraphic.zIndex = Z_FRONT;
+            lineGraphic.zIndex = Z_FOREMOST;
             lineGraphic.stroke({ width: BORDER_WIDTH, color: color_ });
             APP.stage.addChild(lineGraphic);
             this.lineGraphics.push(lineGraphic);
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // 사각형 그린다.
+    ///////////////////////////////////////////////////////////////////////////
     private drawRect(lineIdx_: number, color_: number): void {
         if(this.matchedSprites[lineIdx_].length == 0) {
             this.rectGraphics.push(0);
@@ -372,16 +371,19 @@ export default class CRewardManager {
             rectGraphic.rect(matchedSprite.x, matchedSprite.y, WIDTH - BORDER_OFFSET, HEIGHT);
             rectGraphic.stroke({ width: BORDER_WIDTH, color: color_ });
         }
-        rectGraphic.zIndex = Z_FRONT;
+        rectGraphic.zIndex = Z_FOREMOST;
         rectGraphic.visible = false;
         APP.stage.addChild(rectGraphic);
         this.rectGraphics.push(rectGraphic);
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // 라인 당 이긴 금액 그린다.
+    ///////////////////////////////////////////////////////////////////////////
     private drawLineWinText(winAmount_: number, color_: number): void {
         let textContent: string = "Line Win Pays: " + winAmount_;
             let style = new TextStyle({fontSize: 18, fill: color_});
-            let tempText = new Text({x: 150, y:555, zIndex:Z_FRONT, text: textContent, style});
+            let tempText = new Text({x: 150, y:555, zIndex:Z_FOREMOST, text: textContent, style});
             tempText.visible = false;
             APP.stage.addChild(tempText);
             this.lineWinTexts.push(tempText);
@@ -395,15 +397,6 @@ export default class CRewardManager {
             this.bFinishedCheckResult = false;
             return true;
         }
-        return false;
-    }
-
-    public isCanSkip(): boolean {
-        if(this.bCanSkip == true) {
-            this.bCanSkip = false;
-            return true;
-        }
-
         return false;
     }
 
@@ -499,9 +492,9 @@ export default class CRewardManager {
                 if(typeof isNum == "number") {
                     this.setSpecificGraphicsVisible(this.lineWinTexts, visibleLineIdx_);
                     if(isNum == 0) {
-                        SYMBOL_MANAGER.playScatterComboSymbolEffect(this.matchedSameScatters[isNum]);
+                        SYMBOL_MANAGER.playScatterComboSymbolEffect(this.matchedScatters[isNum]);
                     } else {
-                        SYMBOL_MANAGER.playScatterSymbolEffect(this.matchedSameScatters[isNum]);
+                        SYMBOL_MANAGER.playScatterSymbolEffect(this.matchedScatters[isNum]);
                     }
                     
                     this.curVisibleLine = visibleLineIdx_;
@@ -510,11 +503,17 @@ export default class CRewardManager {
                     this.setSpecificGraphicsVisible(this.rectGraphics, visibleLineIdx_);
                     this.setSpecificGraphicsVisible(this.lineWinTexts, visibleLineIdx_);
                     // 와일드 심볼일 경우 이펙트를 틀어준다.
+                
                     for(let symbolSprite of this.matchedSprites[visibleLineIdx_]) {
+                        if(symbolSprite == null) {
+                            continue;
+                        }
+
                         if(SYMBOL_MANAGER.isWildSymbol(symbolSprite.texture.label)) {
                             SYMBOL_MANAGER.createEffect(EAnimatedSprite.wild, symbolSprite.x, symbolSprite.y);
                         }
                     }
+                    
                     let blinkAtt: {line: number, visible: boolean, count: number} = {line:visibleLineIdx_, visible: true, count: 0};
                     this.curVisibleLine = visibleLineIdx_;
                     this.blinkSymbols(blinkAtt);
@@ -567,9 +566,10 @@ export default class CRewardManager {
     ///////////////////////////////////////////////////////////////////////////
     public clearLines(): void {
         this.setAllSymbolVisible(true);
-        this.matchedSprites = [];
-        
         this.matchedLines = [];
+        this.matchedSprites = [];
+        this.matchedScatters = [[], [], [], []];
+        
         for(const lineGraphic of this.lineGraphics) {
             if(lineGraphic == null || typeof lineGraphic == "number") {
                 continue;
@@ -599,12 +599,9 @@ export default class CRewardManager {
         this.winText.visible = false;
         this.winText.text = 0;
         this.bFinishedCheckResult = false;
-        this.bCanSkip = false;
 
         SYMBOL_MANAGER.deleteWholeEffect();
 
         UTIL.clearTimeout(this.timeoutArray);
-
-        this.matchedSameScatters = [[], [], [], []];
     }
 }

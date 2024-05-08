@@ -46,10 +46,6 @@ export default class CSlot {
         // 백그라운드 생성
         const background = new Sprite(texture);
 
-        // Move the sprite to the center of the screen
-        background.x = 0;
-        background.y = 0;
-
         // 백그라운드 이미지가 항상 위로 오도록
         background.zIndex = 1;
 
@@ -60,10 +56,6 @@ export default class CSlot {
 
         // 백그라운드 생성
         const background2= new Sprite(texture);
-
-        // Move the sprite to the center of the screen
-        background2.x = 0;
-        background2.y = 0;
 
         // 백그라운드 이미지가 항상 뒤에 오도록
         background2.zIndex = -1;
@@ -109,7 +101,6 @@ export default class CSlot {
     public setReelDefault(): void {
         for(let i = 0; i < REEL_COUNT; i++){
             const tempReel = new CReel(i);
-            tempReel.setSymbolsTexture();
             this.observerReels.push(tempReel);
         }
 

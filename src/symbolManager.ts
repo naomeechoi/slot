@@ -130,7 +130,7 @@ export default class CSymbolManager {
     ///////////////////////////////////////////////////////////////////////////////
     // 텍스쳐들을 로드한다.
     ///////////////////////////////////////////////////////////////////////////////
-    public async loadTextures(wildSpriteSheetPath_: string, scatterComboSpriteSheetPath_: string, scatterSpriteSheetPath_: string): Promise<void> {
+    public async loadSpriteTextures(wildSpriteSheetPath_: string, scatterComboSpriteSheetPath_: string, scatterSpriteSheetPath_: string): Promise<void> {
         for(const symbol of this.symbolInfo){
             await symbol.loadTexture();
         }
@@ -258,7 +258,7 @@ export default class CSymbolManager {
     ///////////////////////////////////////////////////////////////////////////
     // 스케터 심볼인지 확인
     ///////////////////////////////////////////////////////////////////////////
-    public isScatterSymbol(value_: number | string | undefined) {
+    public isScatterSymbol(value_: number | string | undefined): boolean {
         switch(typeof value_) {
             case "number": {
                 const SCATTERS = 1 | 2 | 3;
@@ -359,9 +359,13 @@ export default class CSymbolManager {
         }
     }
 
+    ///////////////////////////////////////////////////////////////////////////////
+    // 라인 한 개당 크레딧 얼마인지 셋팅
+    ///////////////////////////////////////////////////////////////////////////////
     public setLineCredit(lineCredit_: number): void {
         this.lineCredit = lineCredit_;
     }
+
     ///////////////////////////////////////////////////////////////////////////////
     // 몇 배로 보상해줘야 하는지 심볼 유니크 번호로 찾기
     ///////////////////////////////////////////////////////////////////////////////
@@ -406,7 +410,7 @@ export default class CSymbolManager {
     }
 
     ///////////////////////////////////////////////////////////////////////////////
-    // 스케터 콤보 이펙트 플레이 삭제
+    // 스케터 콤보 이펙트 플레이
     ///////////////////////////////////////////////////////////////////////////////
     public playScatterComboSymbolEffect(matchedScatters_: Sprite[]): void {
         for(let scatter of matchedScatters_) {
@@ -415,7 +419,7 @@ export default class CSymbolManager {
     }
 
     ///////////////////////////////////////////////////////////////////////////////
-    // 스케터 이펙트 플레이 삭제
+    // 스케터 이펙트 플레이
     ///////////////////////////////////////////////////////////////////////////////
     public playScatterSymbolEffect(matchedScatters_: Sprite[]): void {
         for(let scatter of matchedScatters_) {
@@ -427,31 +431,15 @@ export default class CSymbolManager {
     // 심볼 이펙트 전체 삭제
     ///////////////////////////////////////////////////////////////////////////////
     public deleteWholeEffect(): void {
-        this.deleteEffect(EAnimatedSprite.wild);
-        this.deleteEffect(EAnimatedSprite.scatterCombo);
-        this.deleteEffect(EAnimatedSprite.scatter);
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // 심볼 이펙트 삭제
-    ///////////////////////////////////////////////////////////////////////////////
-    private deleteEffect(effect_: EAnimatedSprite): void {
-        let animatedSprites;
-
-        switch(effect_) {
-            case EAnimatedSprite.wild: {
-                animatedSprites = this.wildAnimatedSprites;
-            } break;
-            case EAnimatedSprite.scatterCombo: {
-                animatedSprites = this.scatterComboAnimatedSprites;
-            } break;
-            case EAnimatedSprite.scatter: {
-                animatedSprites = this.scatterAnimatedSprites;
-            } break;
-
+        for(const animatedSprite of this.wildAnimatedSprites) {
+            APP.stage.removeChild(animatedSprite);
         }
 
-        for(const animatedSprite of animatedSprites) {
+        for(const animatedSprite of this.scatterComboAnimatedSprites) {
+            APP.stage.removeChild(animatedSprite);
+        }
+
+        for(const animatedSprite of this.scatterAnimatedSprites) {
             APP.stage.removeChild(animatedSprite);
         }
     }

@@ -68,6 +68,8 @@ export default class CReel {
         {
             this.bPrevReelPermission = false;
         }
+
+        this.setSymbolsTexture();
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -92,9 +94,9 @@ export default class CReel {
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // CSlot에서 심볼들의 texture를 셋팅해준다.
+    // 심볼들의 texture를 셋팅해준다.
     ///////////////////////////////////////////////////////////////////////////
-    public setSymbolsTexture(): void {
+    private setSymbolsTexture(): void {
         for(let i = 0; i < this.symbolPool.length; i++){
             const symbol = this.symbolPool[i];
             const tempTexture = SYMBOL_MANAGER.getSymbolTextureBySequenceLocation(this.reelIdx, i);
@@ -136,7 +138,7 @@ export default class CReel {
     ///////////////////////////////////////////////////////////////////////////
     private isSymbolOnScreen(idx_: number): boolean {
         const SYMBOL_ON_SCREEN_START_IDX = 1;
-        const SYMBOL_ON_SCREEN_LAST_IDX  = SYMBOL_ON_SCREEN_START_IDX + SYMBOLS_ON_SCREEN_LENGTH - 1;
+        const SYMBOL_ON_SCREEN_LAST_IDX  = 4;
 
         if(idx_ >= SYMBOL_ON_SCREEN_START_IDX && idx_ <= SYMBOL_ON_SCREEN_LAST_IDX) {
             return true;
@@ -192,7 +194,7 @@ export default class CReel {
     // 위치를 풀 가장 뒷자리로 옮겨주고 텍스쳐를 바꿔준다.
     ///////////////////////////////////////////////////////////////////////////
     private changeTextureAndRelocate(target_: CSymbol): void {
-        const Y_POS_OUT_OF_BOUNDARY = 624;
+        const Y_POS_OUT_OF_BOUNDARY = 524;
 
         if(target_.sprite.y < Y_POS_OUT_OF_BOUNDARY) {
             return;
@@ -200,10 +202,15 @@ export default class CReel {
 
         // 우선 풀에서 걸러준다.
         this.symbolPool = this.symbolPool.filter(item => item !== target_);
-        const lastImgIdx = this.symbolPool.length - 1;
+
+        // 가장 위에 있는 심볼의 위치를 구한다.
+        let topY = Y_POS_OUT_OF_BOUNDARY;
+        for(const tempSymbol of this.symbolPool) {
+            topY = Math.min(topY, tempSymbol.sprite.y);
+        }
 
         // 제일 마지막 심볼 위 y값
-        target_.sprite.y = this.symbolPool[lastImgIdx].sprite.y - Y_POS_GAP;
+        target_.sprite.y = topY - Y_POS_GAP;
 
         // sequenceLocation을 증가시켜주고 값이 범위를 넘으면 보정해준다.
         this.sequenceLocation++;
@@ -213,6 +220,7 @@ export default class CReel {
 
         // 새로운 텍스쳐로 바꿔준다.
         target_.sprite.texture = SYMBOL_MANAGER.getSymbolTextureBySequenceLocation(this.reelIdx, this.sequenceLocation)!;
+
         // 다시 풀에 넣는다.
         this.symbolPool.push(target_); 
     }
