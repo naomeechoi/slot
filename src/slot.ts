@@ -1,5 +1,5 @@
-import { Assets, Graphics, Sprite, TextStyle, Text } from "pixi.js";
-import { APP, SYMBOL_MANAGER, REWARD_MANAGER, UTIL } from "./singleton"
+import { Assets, Graphics, Sprite } from "pixi.js";
+import { APP, REWARD_MANAGER, UTIL } from "./singleton"
 import CReel from "./reel"
 const REEL_COUNT = 5;
 const SPIN_TERM = 300;
@@ -98,7 +98,7 @@ export default class CSlot {
     ///////////////////////////////////////////////////////////////////////////
     // 릴 기본 셋팅
     ///////////////////////////////////////////////////////////////////////////
-    public setReelDefault(): void {
+    public setReels(): void {
         for(let i = 0; i < REEL_COUNT; i++){
             const tempReel = new CReel(i);
             this.observerReels.push(tempReel);
@@ -203,8 +203,8 @@ export default class CSlot {
         }, SPIN_TIME);
         this.timeoutArray.push(spinTimeTimeout);
 
-        // 페이라인 그려진게 있다면 지운다.
-        REWARD_MANAGER.clearLines();
+        // 리워드 관련 클리어
+        REWARD_MANAGER.clear();
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -237,31 +237,23 @@ export default class CSlot {
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // 릴이 멈춰야할 위치를 랜덤으로 정한다.
-    ///////////////////////////////////////////////////////////////////////////
-    private randomizeStopNumber(): number[] {
-        let reelStopNumbers: number[] = [];
-        for(let i = 0; i < REEL_COUNT; i++){
-            const reelLength = SYMBOL_MANAGER.getSequenceLength(i);
-            const randomReelNum = Math.floor(Math.random() * reelLength);
-            reelStopNumbers.push(randomReelNum);
-        }
-
-        return reelStopNumbers;
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
     // 릴들을 정지 시킨다.
     ///////////////////////////////////////////////////////////////////////////
     private stopSpinning(): void {
-        const reelStopNumbers = this.randomizeStopNumber(); 
         for(let i = 0; i < REEL_COUNT; i++){
             const reelStopTermTimeout = setTimeout(() => {
                 if(this.observerReels[i] == null) {
                     return;
                 }
 
-                this.observerReels[i].SetReelStopLocation(reelStopNumbers[i]);
+                // 심볼 시퀀스 길이 얻어 오기
+                const reelLength = this.observerReels[i].getSymbolSequenceLength();
+
+                // 랜덤 숫자 뽑기
+                const randomReelNum = Math.floor(Math.random() * reelLength);
+
+                // 스탑 릴 셋팅하기
+                this.observerReels[i].SetReelStopLocation(randomReelNum);
             }, i * SPIN_TERM);
             this.timeoutArray.push(reelStopTermTimeout);
         }

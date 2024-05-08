@@ -8,7 +8,7 @@ class CSymbolInfo {
     private readonly uniqueNum: number;
     private readonly imgPath: string;
     private readonly mulByConsecutiveCountMap: Map<number, number> = new Map;
-    private texture!: any;
+    private texture!: Texture;
 
     constructor(uniqueNum_: number, imgPath_: string, rewards_: {key: number, value: number}[]) {
         this.uniqueNum = uniqueNum_;
@@ -166,17 +166,6 @@ export default class CSymbolManager {
     }
 
     ///////////////////////////////////////////////////////////////////////////////
-    // 텍스쳐를 가져온다.
-    ///////////////////////////////////////////////////////////////////////////////
-    private getSymbolTexture(index_: number): Texture | null {
-        const symbol = this.symbolInfo[index_];
-        if(symbol == null)
-            return null;
-
-        return symbol.getTexture();
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////
     // 심볼 고유 번호를 가져온다.
     ///////////////////////////////////////////////////////////////////////////////
     public getSymbolUniqueNumByTexture(texture_: Texture): number | null {
@@ -216,7 +205,11 @@ export default class CSymbolManager {
 
         const symbolIdentifyNum = sequenceArrayOnCurReel[sequenceLocation_];
 
-        return this.getSymbolTexture(symbolIdentifyNum);
+        const symbol = this.symbolInfo[symbolIdentifyNum];
+        if(symbol == null)
+            return null;
+
+        return symbol.getTexture();
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -227,7 +220,7 @@ export default class CSymbolManager {
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // 와일드 카드인지 확인
+    // 와일드 심볼인지 확인
     ///////////////////////////////////////////////////////////////////////////
     public isWildSymbol(value_: number | string | undefined): boolean {
         switch(typeof value_) {
@@ -312,54 +305,6 @@ export default class CSymbolManager {
     }
 
     ///////////////////////////////////////////////////////////////////////////////
-    // 심볼 이펙트 생성
-    ///////////////////////////////////////////////////////////////////////////////
-    public createEffect(effect_: EAnimatedSprite, x_: number, y_:number): void {
-        switch(effect_) {
-            case EAnimatedSprite.wild: {
-                let newEffect = new AnimatedSprite(this.wildEffectFrames);
-                newEffect.position.set(x_ + -10, y_ + -15);
-                newEffect.width = 140;
-                newEffect.height = 120;
-                newEffect.zIndex = 0;
-                newEffect.animationSpeed = 0.45;
-                newEffect.loop = true;
-                newEffect.play();
-
-                this.wildAnimatedSprites.push(newEffect);
-                APP.stage.addChild(newEffect);
-
-            } break;
-            case EAnimatedSprite.scatterCombo: {
-                let newEffect = new AnimatedSprite(this.scatterComboEffectFrames);
-                newEffect.position.set(x_ + -40, y_ + -40);
-                newEffect.width = 200;
-                newEffect.height = 180;
-                newEffect.zIndex = 2;
-                newEffect.animationSpeed = 0.45;
-                newEffect.loop = true;
-                newEffect.play();
-
-                this.scatterComboAnimatedSprites.push(newEffect);
-                APP.stage.addChild(newEffect);
-            } break;
-            case EAnimatedSprite.scatter: {
-                let newEffect = new AnimatedSprite(this.scatterEffectFrames);
-                newEffect.position.set(x_ + -40, y_ + -40);
-                newEffect.width = 200;
-                newEffect.height = 180;
-                newEffect.zIndex = 2;
-                newEffect.animationSpeed = 0.85;
-                newEffect.loop = true;
-                newEffect.play();
-
-                this.scatterAnimatedSprites.push(newEffect);
-                APP.stage.addChild(newEffect);
-            } break;
-        }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////
     // 라인 한 개당 크레딧 얼마인지 셋팅
     ///////////////////////////////////////////////////////////////////////////////
     public setLineCredit(lineCredit_: number): void {
@@ -407,6 +352,54 @@ export default class CSymbolManager {
         }
 
         return this.lineCredit * mul;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // 심볼 이펙트 생성
+    ///////////////////////////////////////////////////////////////////////////////
+    public createEffect(effect_: EAnimatedSprite, x_: number, y_:number): void {
+        switch(effect_) {
+            case EAnimatedSprite.wild: {
+                let newEffect = new AnimatedSprite(this.wildEffectFrames);
+                newEffect.position.set(x_ + -10, y_ + -15);
+                newEffect.width = 140;
+                newEffect.height = 120;
+                newEffect.zIndex = 0;
+                newEffect.animationSpeed = 0.45;
+                newEffect.loop = true;
+                newEffect.play();
+
+                this.wildAnimatedSprites.push(newEffect);
+                APP.stage.addChild(newEffect);
+
+            } break;
+            case EAnimatedSprite.scatterCombo: {
+                let newEffect = new AnimatedSprite(this.scatterComboEffectFrames);
+                newEffect.position.set(x_ + -40, y_ + -40);
+                newEffect.width = 200;
+                newEffect.height = 180;
+                newEffect.zIndex = 2;
+                newEffect.animationSpeed = 0.45;
+                newEffect.loop = true;
+                newEffect.play();
+
+                this.scatterComboAnimatedSprites.push(newEffect);
+                APP.stage.addChild(newEffect);
+            } break;
+            case EAnimatedSprite.scatter: {
+                let newEffect = new AnimatedSprite(this.scatterEffectFrames);
+                newEffect.position.set(x_ + -40, y_ + -40);
+                newEffect.width = 200;
+                newEffect.height = 180;
+                newEffect.zIndex = 2;
+                newEffect.animationSpeed = 0.85;
+                newEffect.loop = true;
+                newEffect.play();
+
+                this.scatterAnimatedSprites.push(newEffect);
+                APP.stage.addChild(newEffect);
+            } break;
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////

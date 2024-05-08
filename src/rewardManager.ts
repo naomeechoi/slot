@@ -173,9 +173,20 @@ export default class CRewardManager {
     }
 
     ///////////////////////////////////////////////////////////////////////////
+    // 돈 올리는 것까지 전부 끝났는지 확인
+    ///////////////////////////////////////////////////////////////////////////
+    public isFinishChecking(): boolean {
+        if(this.bFinishedCheckResult == true) {
+            this.bFinishedCheckResult = false;
+            return true;
+        }
+        return false;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
     // 페이라인(결과)을 체크하고 라인을 그린다.
     ///////////////////////////////////////////////////////////////////////////
-    public checkScatters(symbolSpritesArray_: Sprite[]): void {
+    private checkScatters(symbolSpritesArray_: Sprite[]): void {
         for(const symbolSprite of symbolSpritesArray_) {
             if(SYMBOL_MANAGER.isScatterSymbol(symbolSprite.texture.label)) {
                 const scatterNum = SYMBOL_MANAGER.whichScatterSymbol(symbolSprite.texture.label);
@@ -390,29 +401,6 @@ export default class CRewardManager {
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // 돈 올리는 것까지 전부 끝났는지 확인
-    ///////////////////////////////////////////////////////////////////////////
-    public isFinishChecking(): boolean {
-        if(this.bFinishedCheckResult == true) {
-            this.bFinishedCheckResult = false;
-            return true;
-        }
-        return false;
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // 오토 플레이에서 라인 보여주는 시간 정하기 위해
-    ///////////////////////////////////////////////////////////////////////////
-    public getShowLInesTime(): number {
-        let count = this.matchedLines.length;
-        if(this.matchedLines.length != 0) {
-            count--;
-        }
-        
-        return SHOW_LINE_TIME * 2.5 + count * SHOW_LINE_TIME;
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
     // visible 설정
     ///////////////////////////////////////////////////////////////////////////
     private setWholeGraphicsVisible(GraphicsArray_: (Graphics | number)[] | Text[], bVisible_: boolean): void {
@@ -562,9 +550,21 @@ export default class CRewardManager {
     }
 
     ///////////////////////////////////////////////////////////////////////////
+    // 오토 플레이에서 라인 보여주는 시간 정하기 위해
+    ///////////////////////////////////////////////////////////////////////////
+    private getShowLInesTime(): number {
+        let count = this.matchedLines.length;
+        if(this.matchedLines.length != 0) {
+            count--;
+        }
+        
+        return SHOW_LINE_TIME * 2.5 + count * SHOW_LINE_TIME;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
     // 모든 라인을 없앤다.
     ///////////////////////////////////////////////////////////////////////////
-    public clearLines(): void {
+    public clear(): void {
         this.setAllSymbolVisible(true);
         this.matchedLines = [];
         this.matchedSprites = [];

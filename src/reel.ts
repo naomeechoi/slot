@@ -1,4 +1,4 @@
-import { Sprite } from "pixi.js";
+import { Sprite, Texture } from "pixi.js";
 import { TweenMax } from 'gsap/TweenMax';
 import { APP, SYMBOL_MANAGER, UTIL } from "./singleton"
 
@@ -15,11 +15,31 @@ const EXPONENTIAL_DOWN = 1.1;
 
 ///////////////////////////////////////////////////////////////////////////////
 class CSymbol {
-    sprite: Sprite;
-    originalIdx: number;
+    private sprite: Sprite;
+    private originalIdx: number;
 
     constructor(sprite_: Sprite, idx_: number) {
         this.sprite = sprite_;
+        this.originalIdx = idx_;
+    }
+
+    public getSprite() {
+        return this.sprite;
+    }
+
+    public setTexture(texture_: Texture | null) {
+        if(texture_ == null) {
+            return;
+        }
+
+        this.sprite.texture = texture_;
+    }
+
+    public getIdx() {
+        return this.originalIdx;
+    }
+
+    public setIdx(idx_: number) {
         this.originalIdx = idx_;
     }
 }
@@ -56,7 +76,13 @@ export default class CReel {
                 tempSymbolImg.x = symbolsPosOnReel[i].x;
                 tempSymbolImg.y = symbolsPosOnReel[i].y;
 
-                const tempSymbol: CSymbol= new CSymbol(tempSymbolImg, i);
+                const tempTexture: Texture | null = SYMBOL_MANAGER.getSymbolTextureBySequenceLocation(this.reelIdx, i);
+                if(tempTexture != null) {
+                    tempSymbolImg.texture = tempTexture;
+                    APP.stage.addChild(tempSymbolImg);
+                }
+
+                const tempSymbol: CSymbol = new CSymbol(tempSymbolImg, i);
                 this.symbolPool.push(tempSymbol);
             }
         }
@@ -68,8 +94,6 @@ export default class CReel {
         {
             this.bPrevReelPermission = false;
         }
-
-        this.setSymbolsTexture();
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -94,24 +118,17 @@ export default class CReel {
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // 심볼들의 texture를 셋팅해준다.
-    ///////////////////////////////////////////////////////////////////////////
-    private setSymbolsTexture(): void {
-        for(let i = 0; i < this.symbolPool.length; i++){
-            const symbol = this.symbolPool[i];
-            const tempTexture = SYMBOL_MANAGER.getSymbolTextureBySequenceLocation(this.reelIdx, i);
-            if(tempTexture != null) {
-                symbol.sprite.texture = tempTexture;
-                APP.stage.addChild(symbol.sprite);
-            }
-        }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
     // CSlot에서 다음에 오는 릴을 셋팅해준다.
     ///////////////////////////////////////////////////////////////////////////
     public setNextAdjacentReel(nextReel_: CReel): void {
         this.nextAdjacentReel = nextReel_;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // 현재 릴의 심볼 시퀀스 길이를 반환한다.
+    ///////////////////////////////////////////////////////////////////////////
+    public getSymbolSequenceLength(): number {
+        return SYMBOL_MANAGER.getSequenceLength(this.reelIdx);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -121,6 +138,44 @@ export default class CReel {
         this.bSpinning = true;
         this.reset();
         this.startSpinning();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // bSpinning이 true 상태일 떄, 즉 릴이 돌 때만 매 프레임마다 동작을 가한다.
+    // 속도를 조절, 멈춰야 할 준비, 실제로 멈추는 함수가 호출된다.
+    ///////////////////////////////////////////////////////////////////////////
+    public update(): void {
+        if(this.bSpinning == false)
+            return;
+
+        this.controlSpinningSpeed();
+        this.prepareToStop();
+        this.stop();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // CSlot에서 reelStopLocation을 셋팅해준다.
+    ///////////////////////////////////////////////////////////////////////////
+    public SetReelStopLocation(stopLocation_: number): void {
+        this.reelStopLocation = stopLocation_;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // 스크린에 보이는 심볼들이 모두 멈춰 제자리를 찾았다면 symbolsOnScreenMap의 사이즈가 4가 된다.
+    ///////////////////////////////////////////////////////////////////////////
+    public getCheckPossibility(): boolean {
+        if(this.symbolsOnScreenMap.size == SYMBOLS_ON_SCREEN_LENGTH) {
+            return true;
+        }
+
+        return false;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // 스크린에 보이는 심볼 맵을 반환한다.
+    ///////////////////////////////////////////////////////////////////////////
+    public getSymbolsOnScreenMap(): Map<number, Sprite> {
+        return this.symbolsOnScreenMap;
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -156,22 +211,22 @@ export default class CReel {
         // 스핀 스탑할 때 텅하는 효과, 재귀 종료
 
             // 재귀 호출로 이미지 이동 및 변경
-        const recursiveTween = TweenMax.to(symbol_.sprite, this.spinningSpeed, { ease: "none", y: symbol_.sprite.y + Y_POS_GAP, onComplete: () => {
+        const recursiveTween = TweenMax.to(symbol_.getSprite(), this.spinningSpeed, { ease: "none", y: symbol_.getSprite().y + Y_POS_GAP, onComplete: () => {
             
-            symbol_.originalIdx++;
-            if(symbol_.originalIdx >= this.symbolPool.length) {
-                symbol_.originalIdx = 0;
+            symbol_.setIdx(symbol_.getIdx() + 1);
+            if(symbol_.getIdx() >= this.symbolPool.length) {
+                symbol_.setIdx(0);
             }
 
             if(this.bSpinning == false) {
                 // 쿵하는 효과를 주기 위해 조금 더 아래로 내린다.
-                const readyToStopTween = TweenMax.to(symbol_.sprite, this.spinningSpeed, { ease: "none", y: MAX_Y_POS - Y_POS_GAP * (symbol_.originalIdx) + THUD_VISUAL_EFFECT, onComplete: () => {
+                const readyToStopTween = TweenMax.to(symbol_.getSprite(), this.spinningSpeed, { ease: "none", y: MAX_Y_POS - Y_POS_GAP * (symbol_.getIdx()) + THUD_VISUAL_EFFECT, onComplete: () => {
                     // 다시 제자리로 올라온다.
-                    const stopTween = TweenMax.to(symbol_.sprite, MAX_SPINNING_SPEED, { ease: "none", y: symbol_.sprite.y - THUD_VISUAL_EFFECT, delay: THUD_EFFECT_DELAY, onComplete: () => {
+                    const stopTween = TweenMax.to(symbol_.getSprite(), MAX_SPINNING_SPEED, { ease: "none", y: symbol_.getSprite().y - THUD_VISUAL_EFFECT, delay: THUD_EFFECT_DELAY, onComplete: () => {
                         // 스크린에 보여줘야할 심볼이면 symbolsOnScreenMap에 담아둔다.
                         // symbolsOnScreenMap은 페이라인을 판단하는데 쓰인다.
-                        if(this.isSymbolOnScreen(symbol_.originalIdx)) {
-                            this.symbolsOnScreenMap.set(SYMBOLS_ON_SCREEN_LENGTH - symbol_.originalIdx, symbol_.sprite);
+                        if(this.isSymbolOnScreen(symbol_.getIdx())) {
+                            this.symbolsOnScreenMap.set(SYMBOLS_ON_SCREEN_LENGTH - symbol_.getIdx(), symbol_.getSprite());
                         }
                     }})
 
@@ -196,7 +251,7 @@ export default class CReel {
     private changeTextureAndRelocate(target_: CSymbol): void {
         const Y_POS_OUT_OF_BOUNDARY = 524;
 
-        if(target_.sprite.y < Y_POS_OUT_OF_BOUNDARY) {
+        if(target_.getSprite().y < Y_POS_OUT_OF_BOUNDARY) {
             return;
         }
 
@@ -206,11 +261,11 @@ export default class CReel {
         // 가장 위에 있는 심볼의 위치를 구한다.
         let topY = Y_POS_OUT_OF_BOUNDARY;
         for(const tempSymbol of this.symbolPool) {
-            topY = Math.min(topY, tempSymbol.sprite.y);
+            topY = Math.min(topY, tempSymbol.getSprite().y);
         }
 
         // 제일 마지막 심볼 위 y값
-        target_.sprite.y = topY - Y_POS_GAP;
+        target_.getSprite().y = topY - Y_POS_GAP;
 
         // sequenceLocation을 증가시켜주고 값이 범위를 넘으면 보정해준다.
         this.sequenceLocation++;
@@ -219,30 +274,10 @@ export default class CReel {
         }
 
         // 새로운 텍스쳐로 바꿔준다.
-        target_.sprite.texture = SYMBOL_MANAGER.getSymbolTextureBySequenceLocation(this.reelIdx, this.sequenceLocation)!;
+        target_.setTexture(SYMBOL_MANAGER.getSymbolTextureBySequenceLocation(this.reelIdx, this.sequenceLocation));
 
         // 다시 풀에 넣는다.
         this.symbolPool.push(target_); 
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // CSlot에서 reelStopLocation을 셋팅해준다.
-    ///////////////////////////////////////////////////////////////////////////
-    public SetReelStopLocation(stopLocation_: number): void {
-        this.reelStopLocation = stopLocation_;
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // bSpinning이 true 상태일 떄, 즉 릴이 돌 때만 매 프레임마다 동작을 가한다.
-    // 속도를 조절, 멈춰야 할 준비, 실제로 멈추는 함수가 호출된다.
-    ///////////////////////////////////////////////////////////////////////////
-    public update(): void {
-        if(this.bSpinning == false)
-            return;
-
-        this.controlSpinningSpeed();
-        this.prepareToStop();
-        this.stop();
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -307,23 +342,5 @@ export default class CReel {
                 this.bSpinning = false;
             }
         }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // 스크린에 보이는 심볼들이 모두 멈춰 제자리를 찾았다면 symbolsOnScreenMap의 사이즈가 4가 된다.
-    ///////////////////////////////////////////////////////////////////////////
-    public getCheckPossibility(): boolean {
-        if(this.symbolsOnScreenMap.size == SYMBOLS_ON_SCREEN_LENGTH) {
-            return true;
-        }
-
-        return false;
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // 스크린에 보이는 심볼 맵을 반환한다.
-    ///////////////////////////////////////////////////////////////////////////
-    public getSymbolsOnScreenMap(): Map<number, Sprite> {
-        return this.symbolsOnScreenMap;
     }
 }

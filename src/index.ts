@@ -7,7 +7,7 @@ main();
 
 function main() {
     SLOT.setBackground();
-    SLOT.setReelDefault();
+    SLOT.setReels();
     SLOT.setUI();
     setInterval(update, FPS);
 }
