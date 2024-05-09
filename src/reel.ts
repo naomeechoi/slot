@@ -208,14 +208,13 @@ export default class CReel {
         const THUD_VISUAL_EFFECT = 50;
         const THUD_EFFECT_DELAY = 0.015;
         const MAX_Y_POS = 524;
-        // 스핀 스탑할 때 텅하는 효과, 재귀 종료
 
-            // 재귀 호출로 이미지 이동 및 변경
+        // 재귀 호출로 이미지 이동 및 변경
         const recursiveTween = TweenMax.to(symbol_.getSprite(), this.spinningSpeed, { ease: "none", y: symbol_.getSprite().y + Y_POS_GAP, onComplete: () => {
             
-            symbol_.setIdx(symbol_.getIdx() + 1);
-            if(symbol_.getIdx() >= this.symbolPool.length) {
-                symbol_.setIdx(0);
+            symbol_.setIdx(symbol_.getIdx() - 1);
+            if(symbol_.getIdx() < 0) {
+                symbol_.setIdx(this.symbolPool.length - 1);
             }
 
             if(this.bSpinning == false) {

@@ -346,16 +346,16 @@ export default class CRewardManager {
 
         const LINE_START = 0;
         let lineGraphic = new Graphics();
-            for(let j = 0; j < matchedLine_.length; j++) {
-                const Y = Y_START + (Math.floor((matchedLine_[j]) / 5) * HEIGHT) + (HEIGHT / 2);
-                if(j == LINE_START) {
+            for(let i = 0; i < matchedLine_.length; i++) {
+                const Y = Y_START + (Math.floor((matchedLine_[i]) / 5) * HEIGHT) + (HEIGHT / 2);
+                if(i == LINE_START) {
                     lineGraphic.moveTo(X_START, Y);
                 }
 
-                const x = X_START + ((matchedLine_[j]) % 5) * WIDTH + (WIDTH / 2);
-                lineGraphic.lineTo(x, Y);
+                const X = X_START + ((matchedLine_[i]) % 5) * WIDTH + (WIDTH / 2);
+                lineGraphic.lineTo(X, Y);
 
-                if(j == matchedLine_.length - 1) {
+                if(i == matchedLine_.length - 1) {
                     lineGraphic.lineTo(X_FINISH, Y);
                 }
             }
@@ -376,9 +376,6 @@ export default class CRewardManager {
 
         const rectGraphic = new Graphics();
         for(const matchedSprite of this.matchedSprites[lineIdx_]) {
-            if(typeof matchedSprite == "number") {
-                continue;
-            }
             rectGraphic.rect(matchedSprite.x, matchedSprite.y, WIDTH - BORDER_OFFSET, HEIGHT);
             rectGraphic.stroke({ width: BORDER_WIDTH, color: color_ });
         }
